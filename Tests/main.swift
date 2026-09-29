@@ -166,6 +166,31 @@ check("tilts into the swing", f.tipAngle > 0.1,
       String(format: "%.3f rad", Double(f.tipAngle)))
 f.release()
 
+// --- The drawn charm must hang in line with its chain ----------------------
+// The charm is drawn rotated by charmRotation. Turning "straight down" by it
+// must point along the last links; with the sign wrong it points as far the
+// other way, and the charm kinks against the chain at every swing. The first
+// moments after the kick are skipped: the chain jumps there and the charm's
+// deliberate rotational lag takes a few hundredths of a second to catch up.
+
+let q = makeSim()
+settle(q, seconds: 6)
+q.kick(angle: 0.6)
+settle(q, seconds: 0.15)
+var worstKink = 0.0
+for _ in 0..<Int(2 * hz) {
+    clock = clock.addingTimeInterval(1 / hz)
+    q.advance(to: clock)
+    let base = q.nodes[q.nodes.count - 4].p
+    let along = atan2(Double(q.tip.x - base.x), Double(q.tip.y - base.y))
+    let down = CGPoint(x: 0, y: 1).applying(CGAffineTransform(rotationAngle: q.charmRotation))
+    worstKink = max(worstKink, abs(atan2(Double(down.x), Double(down.y)) - along))
+}
+// Lag keeps it up to ~0.17 rad behind at the fastest point of the swing; the
+// wrong sign is out by ~1.45.
+check("charm hangs in line with the chain", worstKink < 0.3,
+      String(format: "worst %.3f rad off the chain", worstKink))
+
 // --- Chain must stay taut and never buckle ---------------------------------
 // The original solver had distance constraints only, so the chain folded back
 // on itself the moment it went slack: measured end-to-end length collapsed
@@ -216,6 +241,48 @@ settle(k, seconds: 5)
 let recovered = abs(k.tip.dist(anchor) - ropeLen)
 check("recovers from slack without kinking", recovered < 8,
       String(format: "%.2f pt off nominal", recovered))
+
+// --- Impulse must swing it, not stretch it ---------------------------------
+// The web yank shoves the charm instead of dragging it. A push along the chain
+// can't be taken up by the links, so it must come out as swing, not length.
+
+let m = makeSim()
+settle(m, seconds: 6)
+m.impulse(CGVector(dx: 300, dy: -200))
+var reach: CGFloat = 0
+var longest: CGFloat = 0
+for _ in 0..<Int(1.5 * hz) {
+    clock = clock.addingTimeInterval(1 / hz)
+    m.advance(to: clock)
+    reach = max(reach, m.tip.x - anchor.x)
+    longest = max(longest, m.tip.dist(anchor))
+}
+check("an impulse sets it swinging", reach > 40, String(format: "reached %.0f pt", reach))
+check("an impulse does not stretch the chain", longest < ropeLen * 1.02,
+      String(format: "longest %.1f pt of %.0f", longest, ropeLen))
+
+// --- Only manhandling sets off the web blast -------------------------------
+// Moving the charm about normally must never trigger it; throwing it about
+// hard for a second or two must.
+
+/// Feeds the meter a pointer path sampled at 120 Hz; returns seconds to trigger.
+func shakeTrigger(seconds: Double, _ path: (Double) -> CGPoint) -> Double? {
+    let meter = ShakeMeter()
+    let start = Date(timeIntervalSinceReferenceDate: 0)
+    for i in 0...Int(seconds * 120) {
+        let t = Double(i) / 120
+        if meter.drag(to: path(t), at: start.addingTimeInterval(t)) { return t }
+    }
+    return nil
+}
+
+let slowDrag = shakeTrigger(seconds: 8) { CGPoint(x: 280 + 400 * sin($0 * 0.9), y: 300) }   // ~360 pt/s peak
+check("a slow drag never sets it off", slowDrag == nil)
+let fling = shakeTrigger(seconds: 1) { CGPoint(x: 280 + min($0, 0.25) * 4000, y: 300) }   // 1000 pt in 0.25s
+check("a single fling doesn't set it off", fling == nil)
+let shaking = shakeTrigger(seconds: 4) { CGPoint(x: 280 + 150 * sin($0 * 2 * .pi * 3), y: 300) }
+check("hard shaking sets it off", shaking.map { $0 < 3 } ?? false,
+      shaking.map { String(format: "after %.2f s", $0) } ?? "never")
 
 // --- Robustness -------------------------------------------------------------
 

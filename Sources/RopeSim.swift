@@ -58,6 +58,7 @@ final class RopeSim {
     private var lastTime: TimeInterval = 0
     private var accumulator: Double = 0
     private var clock: Double = 0
+    private let fixedStep = 1.0 / 240.0
 
     func reset(anchor: CGPoint, count: Int, segLen: CGFloat) {
         self.anchor = anchor
@@ -86,11 +87,10 @@ final class RopeSim {
         // steps outright — a backwards clock must not unwind the simulation.
         dt = max(0, min(dt, 0.05))
         accumulator += dt
-        let fixed = 1.0 / 240.0
         var guardCount = 0
-        while accumulator >= fixed && guardCount < 32 {
-            step(dt: fixed)
-            accumulator -= fixed
+        while accumulator >= fixedStep && guardCount < 32 {
+            step(dt: fixedStep)
+            accumulator -= fixedStep
             guardCount += 1
         }
     }
@@ -177,6 +177,11 @@ final class RopeSim {
 
     var tip: CGPoint { nodes.last?.p ?? anchor }
 
+    /// The turn that lines the charm's artwork up with the chain when drawn in
+    /// y-down screen space. tipAngle runs from straight down toward +x, and on
+    /// a y-down screen that is a counter-clockwise turn, hence the sign.
+    var charmRotation: CGFloat { -tipAngle }
+
     func grab(_ p: CGPoint) {
         if !grabbed {
             grabbed = true
@@ -200,6 +205,20 @@ final class RopeSim {
             let p = CGPoint(x: anchor.x + sin(angle) * d, y: anchor.y + cos(angle) * d)
             nodes[i].p = p
             nodes[i].old = p              // released from rest
+        }
+    }
+
+    /// Shoves the charm at `v` points per second. The push tapers toward the
+    /// ceiling so the chain swings from its anchor rather than translating
+    /// rigidly, and the constraint solve strips whatever part of it runs along
+    /// the chain, leaving only the part that can actually swing it.
+    func impulse(_ v: CGVector) {
+        guard nodes.count > 1 else { return }
+        let last = CGFloat(nodes.count - 1)
+        for i in 1..<nodes.count {
+            // Verlet keeps velocity implicitly, as p - old per substep.
+            let k = CGFloat(i) / last * CGFloat(fixedStep)
+            nodes[i].old = CGPoint(x: nodes[i].old.x - v.dx * k, y: nodes[i].old.y - v.dy * k)
         }
     }
 
