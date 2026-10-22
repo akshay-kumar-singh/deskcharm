@@ -22,8 +22,26 @@ It lives in the menu bar as `✦` — no Dock icon, no window chrome.
   screen: a flash, then a web across everything for five seconds. It's paint
   only — clicks, typing and focus carry on underneath as normal.
 - Spider-Man leaves **afterimages** when he moves fast.
+- **Double-click Batman** and a stream of bats pours out from behind the
+  charm as it fires a grapple into the front window. The bats reach the window
+  as the grapple bites and circle it; then the window is poured down the
+  grapple into the charm like a genie into its lamp, the bats' ring sliding
+  across to circle the charm, and it goes in a flash. The bats dive in after
+  it. The app is hidden, as with the web yank.
+- **Throw Batman about hard** and a swarm of bats bursts up from the bottom of
+  the screen, all but covering it, and is gone over the top in three and a
+  half seconds. Paint only, like the web blast.
+- **Double-click the Hulk** and the Hulk, in 3D, drops in at the bottom of
+  the screen, cracking the floor, reaches up and rips the front window out of
+  its place by one edge, and smashes it into the floor left, right, left,
+  right — the way he dealt with Loki — the window flopping like a rubber mat
+  and cracking with every slam. Then he hurls it into the charm, where it's
+  minimised, and leaps away. The app is hidden, as with the web yank.
+- **Throw the Hulk about hard** and three blows punch into the screen as if it
+  were a concrete wall: craters, cracks forking across it, chunks and dust
+  thrown out. It holds a moment, then the craters crumble away. Paint only.
 - **Menu bar `✦`** → pick charm, size, chain length, screen position, and (with
-  a Spider-Man) turn **Sound Effects** on or off.
+  Spider-Man, Batman or the Hulk) turn **Sound Effects** on or off.
 - **Quit** from the same menu.
 
 The window is large and transparent, but only accepts clicks while the pointer
@@ -36,8 +54,8 @@ Another app's window can't be moved from outside it, so what flies is a
 stand-in, and the app is hidden underneath it the moment it's covered. With
 Screen Recording allowed, the stand-in is a snapshot of the real window;
 without it, a card with the app's icon and name. Turn it on from
-`✦` → **Allow Window Snapshots…** (shown while a Spider-Man is selected), then
-relaunch. Because the build is ad-hoc signed, macOS treats every rebuild as a
+`✦` → **Allow Window Snapshots…** (shown while Spider-Man, Batman or the Hulk
+is selected), then relaunch. Because the build is ad-hoc signed, macOS treats every rebuild as a
 new app and the permission has to be granted again.
 
 The app is hidden (⌘-H) rather than its window minimised. Minimising another
@@ -52,6 +70,74 @@ travel fills a bucket that drains at 700 pt/s and overflows at 2400 pt, so a
 slow drag or a single fling never gets there. The web is drawn on a
 click-through overlay that never takes focus, and once it has spread its frame
 clock is paused — measured live, it adds no CPU while it holds.
+
+## Bat tow
+
+The web yank's machinery with a different rig: the same window, stand-in and
+hiding, but the line is a steel grapple fired from the emblem. The overlay
+sits beneath the charm, so the grapple, the window and the flash all seem to
+go in and out from behind it.
+
+The window goes like a genie into a lamp: the stand-in is cut into a strip
+every 6 pt across the line to the charm, the near strips neck in and go first,
+the far ones follow, and each is squeezed to nothing just as it reaches the
+charm, which is when the flash goes off. The bats fly one path a beat apart,
+so they read as a ribbon: out from behind the charm, round the window on a
+tilted ring (passing behind it and in front), the ring sliding across to round
+the charm as the window pours into it, and in on the flash. Every cue is tied
+to a stage rather than a clock — flutter, clank as the claw bites, whoosh, zap,
+pop. With no window to go for, the grapple comes back empty and the bats come
+home anyway.
+
+## Hulk smash
+
+The same window, stand-in and hiding again. The Hulk is a rigged 3D model, read
+from a .glb by a small glTF loader (`GLTF.swift`) into SceneKit and posed by
+hand from his own animations: he crouches into each slam by blending his idle
+pose toward the landing of his jump-slam, leans and turns after the window, and
+his right arm is steered by two-bone IK to wherever his hand has to be on the
+swing. The scene is in points under an orthographic camera, so it lines up
+exactly with the 2D layers drawn behind it — the window still in its place, the
+cracks in the floor, his shadow — and in front of it, the dust and the flying
+concrete.
+
+The window is a sheet (`Cloth.swift`): a grid stepped with Verlet integration
+at 240 Hz and kept in shape by shape matching over overlapping strips, its
+middle row held to its length and the rest let stretch or squash by a quarter,
+so it bends and wobbles like a rubber mat but never crumples or pulls out long.
+He holds it by the middle of its left edge and the sheet's own physics decide
+where it hits the floor — one slam a swing, five swings — each with cracks
+running up from it (`Rubble.swift`), chunks and dust thrown up, the screen and
+the charm jolted, and a crack drawn into the window's texture so it bends with
+the sheet. Then a wind-up, the throw, and a burst of gamma green as it goes into
+the charm.
+
+SceneKit builds its shaders the first time it draws something, and the first
+time ever that held up his entrance by a tenth to a fifth of a second, so he's
+drawn once out of sight at launch. The window's textures are made on the GPU
+off the main thread: handed a picture, SceneKit converts it as it draws, and
+every slam cost a dropped frame. Measured live: ~0.8 ms a frame, a steady 60
+fps, on screen 10–40 ms after the double-click.
+
+## Wall smash
+
+Three blows, each a crater (`Rubble.swift`): a jagged rim round a dark pit,
+both cut from a photo of rough concrete and shaded as if sunk into the screen,
+with a ring of the wall's face chipped off round it. Its cracks run out in
+straight runs with sharp kinks, forking now and then, thinning to hairlines as
+they cross the screen. Chunks fly out under gravity and dust billows and
+settles. While it holds the frame clock is paused; then each crater breaks
+into wedges that fall away. Measured live: ~0.5 ms of drawing a frame.
+
+## Bat swarm
+
+The flight of every bat is worked out when the swarm starts, so a frame is
+only lookups and draws. Bats are added until their wings would cover the
+screen 1.75 times over; overlapping and coming and going, that leaves 74% of
+it covered at the peak, measured from renders. Bigger screens get bigger,
+faster bats rather than more of them, so every display gets the same swarm in
+the same time. Measured live: ~2,800 bats, 1.3 ms of drawing a frame, a steady
+60 fps.
 
 ## Sound
 
@@ -69,8 +155,18 @@ the main thread for 12–116 ms and cost a frame of animation.
 Headless checks on the rope solver: that it hangs vertical, doesn't stretch,
 swings through centre when released, damps to rest, tilts along the chain,
 draws in line with the chain, takes a shove without stretching, and survives
-the app being suspended. Also that only hard shaking sets off the web blast.
-No display needed.
+the app being suspended. Also that only hard shaking sets off the web blast,
+and that the bat swarm rises from out of sight below, heads upward the whole
+way, is gone over the top, and all but covers the screen at its peak; and that
+the tow's pour starts as the whole window, goes near side first, never folds
+over itself and ends with all of it in the charm; that a web of cracks reaches
+everything in its reach, in shards that fit with no gaps and cracks that never
+cross; and that a blow to the wall leaves a crater round where it landed,
+cracks that fork and run well across the screen, and nothing left on screen
+once its pieces have fallen; and that the Hulk's sheet stays in his fist and
+holds out from it like a mat, not a rag, and swung down slams into the floor
+without going through it, pulling out long or folding over, then flies off as
+thrown. No display needed.
 
 ## Layout
 
@@ -80,11 +176,24 @@ Sources/main.swift      rendering, window, menu bar
 Sources/Webs.swift      Spider-Man's hands, web strands, overlays, aiming
 Sources/WebYank.swift   double-click: pull the front window into his hand
 Sources/WebBlast.swift  manhandled: web over the whole screen
+Sources/Bats.swift      Batman's gadget pictures, overlays, aiming
+Sources/BatTow.swift    double-click: grapple and bats pour the front window away
+Sources/Pour.swift      the genie pour's geometry — no AppKit, testable headless
+Sources/BatSwarm.swift  manhandled: bats up the whole screen
+Sources/Swarm.swift     the swarm's flight plan — no AppKit, testable headless
+Sources/Hulk.swift      the Hulk's model and how he's posed, overlays
+Sources/HulkSlam.swift  double-click: the Hulk, in 3D, smashes the window into the charm
+Sources/GLTF.swift      a skinned, animated .glb into SceneKit
+Sources/Cloth.swift     the window as a rubbery sheet — no AppKit, testable headless
+Sources/Cracks.swift    cracked-glass geometry — no AppKit, testable headless
+Sources/WallSmash.swift manhandled: the screen punched in like concrete
+Sources/Rubble.swift    smashed-concrete geometry — no AppKit, testable headless
 Sources/Shake.swift     tells manhandling from ordinary dragging
 Sources/Sounds.swift    synthesised sound effects
-Tests/main.swift        physics checks
+Tests/main.swift        physics and swarm checks
 Charms/                 extracted art at native resolution
 Charms/hd/              2x Lanczos + unsharp — what ships in the bundle
+Effects/                bat wingbeat frames, the Hulk's model and skin, concrete (CREDITS.md)
 ```
 
 ## Physics
@@ -126,5 +235,11 @@ Charm art is extracted from Hangly by sharancreatedthis, which marks it
 redistributed or presented as someone else's work. The Marvel and DC designs
 are also studio IP. This build is personal use on one machine — keep it off
 public repos and out of any release.
+
+The bat frames in `Effects/` are made from a public-domain silhouette from
+Wikimedia Commons; the Hulk is a CC0 model from OpenGameArt, repainted; the
+concrete is a CC0 texture from Poly Haven. `Effects/CREDITS.md` has the
+sources and licences. The Hulk himself is Marvel's design, so the same
+personal-use caution applies.
 
 The code here is mine and carries no such restriction.

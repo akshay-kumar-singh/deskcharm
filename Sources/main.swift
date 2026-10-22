@@ -54,6 +54,52 @@ final class CharmStore {
     func aspect(_ n: String) -> CGFloat { aspects[n] ?? 0.6 }
 }
 
+/// Pictures the charms' effects are drawn with, from the bundle's Effects
+/// folder: PNGs, or JPEGs for photos such as textures. Decoded as they load,
+/// not on first draw, which stalled an effect's first frame by a good 30ms.
+enum EffectArt {
+    static func load(_ name: String) -> CGImage? {
+        guard let folder = Bundle.main.resourceURL?.appendingPathComponent("Effects") else { return nil }
+        for kind in ["png", "jpg"] {
+            if let source = CGImageSourceCreateWithURL(folder.appendingPathComponent("\(name).\(kind)") as CFURL, nil),
+               let image = CGImageSourceCreateImageAtIndex(source, 0, [kCGImageSourceShouldCacheImmediately: true] as CFDictionary) {
+                return image
+            }
+        }
+        return nil
+    }
+}
+
+/// Where each charm's chain is fixed, as a fraction of its artwork, and how
+/// far the artwork is turned from upright to hang from there. Most hang
+/// upright from the middle of their top edge.
+struct CharmHang {
+    let attach: CGPoint
+    let tilt: CGFloat                       // radians, clockwise on screen
+
+    private static let custom: [String: CharmHang] = [
+        // From the loose end of his web, turned so his weight sits straight
+        // under it: the web then leads down from the chain into his fist.
+        "Spider-Man-Swinging": CharmHang(attach: CGPoint(x: 0.012, y: 0.003), tilt: 0.46)
+    ]
+
+    static func of(_ charm: String) -> CharmHang {
+        custom[charm] ?? CharmHang(attach: CGPoint(x: 0.5, y: 0), tilt: 0)
+    }
+
+    /// The artwork's frame around the chain's tip, before it is turned. It
+    /// sits a point higher than the attach point so the chain runs into it.
+    func rect(width w: CGFloat, height h: CGFloat) -> CGRect {
+        CGRect(x: -attach.x * w, y: -attach.y * h - 1, width: w, height: h)
+    }
+
+    /// Carries that frame onto the view: pinned at the tip, turned with the
+    /// chain. Drawing, hit-testing and aiming the webs all go through this.
+    func placement(tip: CGPoint, turn: CGFloat) -> CGAffineTransform {
+        CGAffineTransform(translationX: tip.x, y: tip.y).rotated(by: turn + tilt)
+    }
+}
+
 // MARK: - Settings
 
 final class CharmSettings: ObservableObject {
@@ -74,6 +120,22 @@ final class CharmSettings: ObservableObject {
         ropeLength = r > 0 ? CGFloat(r) : 240
         sounds = d.object(forKey: "sounds") as? Bool ?? true
     }
+
+    /// A velocity kick swings a long chain further than a short one, so kicks
+    /// are scaled by this to give much the same swing at every chain length.
+    var kickScale: CGFloat { sqrt(240 / max(ropeLength, 1)) }
+
+    /// Where a point of a charm's artwork, given as a fraction of it, is drawn
+    /// right now in the charm window. Mirrors the draw in CharmView.render.
+    func artPoint(_ u: CGPoint, of charm: String, sim: RopeSim) -> CGPoint {
+        let hang = CharmHang.of(charm)
+        let art = hang.rect(width: charmHeight * CharmStore.shared.aspect(charm), height: charmHeight)
+        return CGPoint(x: art.minX + u.x * art.width, y: art.minY + u.y * art.height)
+            .applying(hang.placement(tip: sim.tip, turn: sim.charmRotation))
+    }
+
+    /// Whether the charm does anything when double-clicked or thrown about.
+    var hasGadgets: Bool { WebHands.supports(charm) || BatGear.supports(charm) || HulkGear.supports(charm) }
 }
 
 // MARK: - View
@@ -205,23 +267,22 @@ struct CharmView: View {
 
         guard let img = CharmStore.shared.image(settings.charm) else { return }
         let h = settings.charmHeight
-        let w = h * CharmStore.shared.aspect(settings.charm)
+        let hang = CharmHang.of(settings.charm)
+        let art = hang.rect(width: h * CharmStore.shared.aspect(settings.charm), height: h)
 
         if WebHands.supports(settings.charm) {
             for ghost in trail.ghosts() {
                 var g = ctx
                 g.opacity = ghost.opacity
-                g.translateBy(x: ghost.tip.x, y: ghost.tip.y)
-                g.rotate(by: .radians(Double(ghost.angle)))
-                g.draw(img, in: CGRect(x: -w / 2, y: -1, width: w, height: h))
+                g.concatenate(hang.placement(tip: ghost.tip, turn: ghost.angle))
+                g.draw(img, in: art)
             }
         }
 
         var c = ctx
         c.addFilter(.shadow(color: .black.opacity(0.34), radius: 11, x: 0, y: 7))
-        c.translateBy(x: sim.tip.x, y: sim.tip.y)
-        c.rotate(by: .radians(Double(sim.charmRotation)))
-        c.draw(img, in: CGRect(x: -w / 2, y: -1, width: w, height: h))
+        c.concatenate(hang.placement(tip: sim.tip, turn: sim.charmRotation))
+        c.draw(img, in: art)
     }
 }
 
@@ -234,6 +295,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let sim = RopeSim()
     private var settings: CharmSettings!
     private var webs: WebController!
+    private var bats: BatController!
+    private var hulk: HulkController!
 
     private let winW: CGFloat = 560
     private let winH: CGFloat = 820
@@ -258,11 +321,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         window.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary, .ignoresCycle]
         window.ignoresMouseEvents = true
         webs = WebController(charm: window, sim: sim, settings: settings)
+        bats = BatController(charm: window, sim: sim, settings: settings)
+        hulk = HulkController(charm: window, sim: sim, settings: settings)
         SoundFX.shared.enabled = settings.sounds
+        // Each controller only answers for its own charms.
         window.contentView = NSHostingView(rootView: CharmView(
             settings: settings, sim: sim,
-            onDoubleClick: { [weak self] in self?.webs.yank() },
-            onManhandled: { [weak self] in self?.webs.blast() }))
+            onDoubleClick: { [weak self] in self?.webs.yank(); self?.bats.towWindow(); self?.hulk.smashWindow() },
+            onManhandled: { [weak self] in self?.webs.blast(); self?.bats.releaseBats(); self?.hulk.smashScreen() }))
         window.orderFrontRegardless()
 
         buildMenu()
@@ -293,9 +359,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let wf = window.frame
         let local = CGPoint(x: m.x - wf.minX, y: wf.maxY - m.y)   // AppKit y-up -> view y-down
         let h = settings.charmHeight
-        let w = h * CharmStore.shared.aspect(settings.charm)
-        let box = CGRect(x: sim.tip.x - w / 2 - 12, y: sim.tip.y - 12, width: w + 24, height: h + 24)
-        let inside = box.contains(local)
+        let hang = CharmHang.of(settings.charm)
+        let art = hang.rect(width: h * CharmStore.shared.aspect(settings.charm), height: h)
+        // Tested in the artwork's own frame, so the region turns with the charm.
+        let p = local.applying(hang.placement(tip: sim.tip, turn: sim.charmRotation).inverted())
+        let inside = art.insetBy(dx: -12, dy: -12).contains(p)
         if window.ignoresMouseEvents == inside { window.ignoresMouseEvents = !inside }
     }
 
@@ -356,13 +424,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         posItem.submenu = pos
         menu.addItem(posItem)
 
-        if WebHands.supports(settings.charm) && !WindowSnapshot.allowed {
+        if settings.hasGadgets && !WindowSnapshot.allowed {
             let snap = NSMenuItem(title: "Allow Window Snapshots…", action: #selector(allowSnapshots), keyEquivalent: "")
             snap.target = self
-            snap.toolTip = "Lets the web pull the real window instead of a card. Needs Screen Recording; takes effect after a relaunch."
+            snap.toolTip = "Lets the web, the grapple or the Hulk take the real window instead of a card. Needs Screen Recording; takes effect after a relaunch."
             menu.addItem(snap)
         }
-        if WebHands.supports(settings.charm) {
+        if settings.hasGadgets {
             let sfx = NSMenuItem(title: "Sound Effects", action: #selector(toggleSounds), keyEquivalent: "")
             sfx.target = self
             sfx.state = settings.sounds ? .on : .off

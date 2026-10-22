@@ -78,8 +78,8 @@ final class WebController {
         self.charm = charm
         self.sim = sim
         self.settings = settings
-        yankOverlay = Self.overlay(yankHost)
-        blastOverlay = Self.overlay(blastHost)
+        yankOverlay = Overlay.make(yankHost)
+        blastOverlay = Overlay.make(blastHost)
 
         // A process's first window-list query takes ~60ms and later ones well
         // under 1ms. Pay it now, off the main thread, not as a stall at the
@@ -87,22 +87,6 @@ final class WebController {
         DispatchQueue.global(qos: .utility).async {
             _ = CGWindowListCopyWindowInfo(.optionOnScreenOnly, kCGNullWindowID)
         }
-    }
-
-    /// Made once per effect and reused, rather than allocating a screen-sized
-    /// window every time. Click-through and never key, so whatever is beneath
-    /// carries on as if it weren't there.
-    private static func overlay(_ content: NSView) -> NSWindow {
-        let w = NSWindow(contentRect: .zero, styleMask: [.borderless], backing: .buffered, defer: false)
-        w.isReleasedWhenClosed = false
-        w.isOpaque = false
-        w.backgroundColor = .clear
-        w.hasShadow = false
-        w.level = .floating
-        w.ignoresMouseEvents = true
-        w.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary, .ignoresCycle]
-        w.contentView = content
-        return w
     }
 
     // MARK: Yank
@@ -114,50 +98,24 @@ final class WebController {
         else { return }
         let area = screen.frame
         let target = WebTarget.find(in: area)
-        let hand = nearestHand(hands, to: aimPoint(target, from: toOverlay(sim.tip, area), area), area)
-        let k = kick
-        let shot = WebShot(target: target, aim: aimPoint(target, from: hand(), area), hand: hand,
+        let hand = nearestHand(hands, to: WebTarget.aim(at: target, from: toOverlay(sim.tip, area), in: area), area)
+        let k = settings.kickScale
+        let shot = WebShot(target: target, aim: WebTarget.aim(at: target, from: hand(), in: area), hand: hand,
                            push: { [weak self] v in self?.sim.impulse(v * k) },
                            sound: { SoundFX.shared.play($0) },
                            finish: { [weak self] in DispatchQueue.main.async { self?.endYank() } })
         self.shot = shot
-        if let target {
-            // Made off the main thread while the web is in the air. The card
-            // is only drawn when there is no snapshot to be had.
-            let icon = target.app.icon, label = target.app.localizedName ?? ""
-            let scale = screen.backingScaleFactor, appearance = NSApp.effectiveAppearance
-            Task { @MainActor [weak shot] in
-                let snapshot = await WindowSnapshot.capture(target.windowID)
-                var image = snapshot
-                if image == nil {
-                    image = await StandInCard.render(size: target.frame.size, scale: scale, icon: icon,
-                                                     name: label, appearance: appearance)
-                }
-                shot?.standInArrived(image, isSnapshot: snapshot != nil)
-            }
+        target?.standIn(on: screen) { [weak shot] image, isSnapshot in
+            shot?.standInArrived(image, isSnapshot: isSnapshot)
         }
         yankHost.rootView = WebShotView(shot: shot)
-        show(yankOverlay, on: area)
+        Overlay.show(yankOverlay, on: area, below: charm)
     }
 
     private func endYank() {
         yankOverlay.orderOut(nil)
         yankHost.rootView = WebShotView(shot: nil)
         shot = nil
-    }
-
-    /// The title bar, at the point nearest the hand but kept to its middle
-    /// half so the window hangs from somewhere near its centre. With nothing
-    /// to aim at, a shot toward the middle of the screen that comes back empty.
-    private func aimPoint(_ target: WebTarget?, from h: CGPoint, _ area: CGRect) -> CGPoint {
-        let p: CGPoint
-        if let f = target?.frame {
-            p = CGPoint(x: min(max(h.x, f.minX + f.width * 0.25), f.maxX - f.width * 0.25),
-                        y: f.minY + min(18, f.height * 0.1))
-        } else {
-            p = h + unit(CGPoint(x: area.width / 2, y: area.height * 0.6) - h) * 280
-        }
-        return CGPoint(x: min(max(p.x, 8), area.width - 8), y: min(max(p.y, 8), area.height - 8))
     }
 
     // MARK: Blast
@@ -171,14 +129,14 @@ final class WebController {
         // Lands a little off-centre toward him, like something thrown at the glass.
         let tip = toOverlay(sim.tip, area)
         let centre = CGPoint(x: area.width * 0.5 + (tip.x - area.width * 0.5) * 0.25, y: area.height * 0.45)
-        let k = kick
+        let k = settings.kickScale
         let blast = WebBlast(size: area.size, centre: centre, hand: nearestHand(hands, to: centre, area),
                              push: { [weak self] v in self?.sim.impulse(v * k) },
                              sound: { SoundFX.shared.play($0) },
                              finish: { [weak self] in DispatchQueue.main.async { self?.endBlast() } })
         spread = blast
         blastHost.rootView = WebBlastView(blast: blast)
-        show(blastOverlay, on: area)
+        Overlay.show(blastOverlay, on: area, below: charm)
     }
 
     private func endBlast() {
@@ -188,10 +146,6 @@ final class WebController {
     }
 
     // MARK: Hands
-
-    /// A velocity kick swings a long chain further than a short one, so it is
-    /// scaled to give much the same swing at every chain length.
-    private var kick: CGFloat { sqrt(240 / max(settings.ropeLength, 1)) }
 
     /// Live position of whichever hand starts out nearer `point`. The choice
     /// is fixed so the web doesn't jump hands mid-flight.
@@ -203,26 +157,44 @@ final class WebController {
         return { [unowned self] in self.handPoint(hands[index], name, area) }
     }
 
-    /// Mirrors the charm's own draw transform in CharmView.render.
     private func handPoint(_ u: CGPoint, _ charm: String, _ area: CGRect) -> CGPoint {
-        let h = settings.charmHeight
-        let w = h * CharmStore.shared.aspect(charm)
-        let off = CGPoint(x: (u.x - 0.5) * w, y: u.y * h - 1)
-            .applying(CGAffineTransform(rotationAngle: sim.charmRotation))
-        return toOverlay(CGPoint(x: sim.tip.x + off.x, y: sim.tip.y + off.y), area)
+        toOverlay(settings.artPoint(u, of: charm, sim: sim), area)
+    }
+
+    private func toOverlay(_ p: CGPoint, _ area: CGRect) -> CGPoint {
+        Overlay.point(p, from: charm, in: area)
+    }
+}
+
+/// The screen-sized, click-through windows effects are drawn in. Each effect
+/// makes one and reuses it, rather than allocating a screen-sized window
+/// every time. Never key, so whatever is beneath carries on as if it weren't
+/// there.
+enum Overlay {
+    static func make(_ content: NSView) -> NSWindow {
+        let w = NSWindow(contentRect: .zero, styleMask: [.borderless], backing: .buffered, defer: false)
+        w.isReleasedWhenClosed = false
+        w.isOpaque = false
+        w.backgroundColor = .clear
+        w.hasShadow = false
+        w.level = .floating
+        w.ignoresMouseEvents = true
+        w.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary, .ignoresCycle]
+        w.contentView = content
+        return w
+    }
+
+    /// Beneath the charm: lines leave from behind it rather than across it,
+    /// and a window being pulled sat beneath it too.
+    static func show(_ overlay: NSWindow, on area: CGRect, below charm: NSWindow) {
+        overlay.setFrame(area, display: false)
+        overlay.order(.below, relativeTo: charm.windowNumber)
     }
 
     /// Charm-window coordinates to overlay coordinates. Both are y-down.
-    private func toOverlay(_ p: CGPoint, _ area: CGRect) -> CGPoint {
+    static func point(_ p: CGPoint, from charm: NSWindow, in area: CGRect) -> CGPoint {
         let f = charm.frame
         return CGPoint(x: f.minX - area.minX + p.x, y: area.maxY - f.maxY + p.y)
-    }
-
-    /// Beneath the charm: the webs leave from behind his fist rather than
-    /// across it, and a window being pulled sat beneath him too.
-    private func show(_ overlay: NSWindow, on area: CGRect) {
-        overlay.setFrame(area, display: false)
-        overlay.order(.below, relativeTo: charm.windowNumber)
     }
 }
 

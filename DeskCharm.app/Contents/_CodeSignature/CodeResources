@@ -48,6 +48,42 @@
 		<data>
 		BFKu5ef4bFl3lMyfi0a8Tak2sO4=
 		</data>
+		<key>Resources/Effects/Bat-1.png</key>
+		<data>
+		TmBVIAsN8vKiZvXm3380B2KjV/o=
+		</data>
+		<key>Resources/Effects/Bat-2.png</key>
+		<data>
+		NwKu6GJpqhQRHN04rRQovRbnNXQ=
+		</data>
+		<key>Resources/Effects/Bat-3.png</key>
+		<data>
+		It6uA33yusguQzXt4P2I6KQHa64=
+		</data>
+		<key>Resources/Effects/Bat-4.png</key>
+		<data>
+		7IX84I5SzIR1+fht/Ow9lUhgYhM=
+		</data>
+		<key>Resources/Effects/Bat-5.png</key>
+		<data>
+		NEK5vbhglyYDum0+ABtA8+xSo5c=
+		</data>
+		<key>Resources/Effects/Bat-6.png</key>
+		<data>
+		5nl8sAinWyYhZ+CpXJuPhT/+Wic=
+		</data>
+		<key>Resources/Effects/Concrete.jpg</key>
+		<data>
+		GxIchU6+X9syfQV4T4Y9YZXbocs=
+		</data>
+		<key>Resources/Effects/HulkModel.glb</key>
+		<data>
+		T3B7DodnnipKRJ5IvP+g+w5VaRk=
+		</data>
+		<key>Resources/Effects/HulkSkin.png</key>
+		<data>
+		8E617xM/B96nXu5wh1WiHjakJKM=
+		</data>
 	</dict>
 	<key>files2</key>
 	<dict>
@@ -126,6 +162,69 @@
 			<key>hash2</key>
 			<data>
 			Ieu8jvbGjAmg+uxl1v0HW+K8KOVnPAG2Etx/i726PUo=
+			</data>
+		</dict>
+		<key>Resources/Effects/Bat-1.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			fZOnkhfvknEPQLNFdfgThD725ZwFMIXbRRZi/jDKfSc=
+			</data>
+		</dict>
+		<key>Resources/Effects/Bat-2.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			reH5ZDL+N0OCh4vJAxXO6Kz/U7dCnM1XFn2Q1DgfipI=
+			</data>
+		</dict>
+		<key>Resources/Effects/Bat-3.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			eWOU0vC04ScyIvp9a9WA3RKCCv0qY+IoLuXJbL5NMfc=
+			</data>
+		</dict>
+		<key>Resources/Effects/Bat-4.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			485qVus/DNLs3pOz/Is+8E44tNj7NOOzalygjgXEvE4=
+			</data>
+		</dict>
+		<key>Resources/Effects/Bat-5.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			OHCg0fMsZPGML3kqqpgAExoUO19P977MIg2jApDlxb8=
+			</data>
+		</dict>
+		<key>Resources/Effects/Bat-6.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			eFE/rijiaZ73W/uevgK39YBXOVKevglmMlrbWx4Naes=
+			</data>
+		</dict>
+		<key>Resources/Effects/Concrete.jpg</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			3X/APhUuuML9URJIqi6b90KKZFvQ4LdKwdiHrRNssLw=
+			</data>
+		</dict>
+		<key>Resources/Effects/HulkModel.glb</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			k6jMzfMWxm59hhVMrvm5pV6Di+Hq64ZfrV8eS7ZGmN4=
+			</data>
+		</dict>
+		<key>Resources/Effects/HulkSkin.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			q2GlcLsRUlZof/bQvgoBSDq0leI5wJtH98AFyjve/V0=
 			</data>
 		</dict>
 	</dict>

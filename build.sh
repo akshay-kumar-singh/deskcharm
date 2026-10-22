@@ -6,17 +6,18 @@ cd "$(dirname "$0")"
 
 APP="DeskCharm.app"
 rm -rf "$APP" build
-mkdir -p build "$APP/Contents/MacOS" "$APP/Contents/Resources/Charms"
+mkdir -p build "$APP/Contents/MacOS" "$APP/Contents/Resources/Charms" "$APP/Contents/Resources/Effects"
 
 echo "==> Compiling"
 swiftc -O -swift-version 5 \
-    -framework AppKit -framework SwiftUI -framework ScreenCaptureKit -framework AVFoundation \
+    -framework AppKit -framework SwiftUI -framework ScreenCaptureKit -framework AVFoundation -framework SceneKit \
     Sources/*.swift -o build/DeskCharm
 
 cp build/DeskCharm "$APP/Contents/MacOS/DeskCharm"
 
 echo "==> Bundling charms"
 cp Charms/hd/*.png "$APP/Contents/Resources/Charms/"
+cp Effects/*.png Effects/*.jpg Effects/*.glb "$APP/Contents/Resources/Effects/"
 
 cat > "$APP/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>

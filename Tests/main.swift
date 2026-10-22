@@ -1,9 +1,11 @@
 import Foundation
 import CoreGraphics
+import simd
 
 // Headless checks on the rope solver: that the chain holds together, and that
 // the swing reads the way a real one does — graceful period, momentum carried
-// through a release, and amplitude that bleeds off gradually.
+// through a release, and amplitude that bleeds off gradually. Then the shake
+// meter, and the bat swarm's flight plan.
 
 var failures = 0
 func check(_ label: String, _ cond: Bool, _ detail: String = "") {
@@ -283,6 +285,201 @@ check("a single fling doesn't set it off", fling == nil)
 let shaking = shakeTrigger(seconds: 4) { CGPoint(x: 280 + 150 * sin($0 * 2 * .pi * 3), y: 300) }
 check("hard shaking sets it off", shaking.map { $0 < 3 } ?? false,
       shaking.map { String(format: "after %.2f s", $0) } ?? "never")
+
+// --- The bat swarm goes bottom to top and all but covers the screen ---------
+// Flown on a laptop-sized screen with the real sprite's proportions. Every bat
+// must come up from out of sight below and be gone over the top by the end.
+// At the peak the wings on screen must add up to well over the screen: they
+// overlap, and 1.36x measured as 74% of the pixels covered in a real render.
+
+var swarmRNG = SplitMix64(seed: 7)
+let screen = CGSize(width: 1512, height: 982)
+let batFill: CGFloat = 0.34, batAspect: CGFloat = 0.557
+let swarm = Swarm(size: screen, fill: batFill, aspect: batAspect, using: &swarmRNG)
+var risesThrough = true
+var climbs = true
+for b in swarm.bats {
+    let first = swarm.pose(b, at: b.start)
+    let gone = swarm.pose(b, at: swarm.duration + 0.01)
+    risesThrough = risesThrough && (first.map { $0.at.y > screen.height } ?? false) && gone == nil
+    for t in stride(from: b.start, to: swarm.duration, by: 0.05) {
+        guard let p = swarm.pose(b, at: t) else { continue }
+        climbs = climbs && abs(p.heading + .pi / 2) < .pi / 3       // within 60° of straight up
+    }
+}
+check("every bat comes up from below and is gone over the top", risesThrough,
+      "\(swarm.bats.count) bats")
+check("bats head upward the whole way", climbs)
+
+var peak: CGFloat = 0
+var peakAt = 0.0
+for t in stride(from: 0, through: swarm.duration, by: 0.02) {
+    var area: CGFloat = 0
+    for b in swarm.bats {
+        guard let p = swarm.pose(b, at: t),
+              p.at.x >= 0, p.at.x <= screen.width, p.at.y >= 0, p.at.y <= screen.height else { continue }
+        area += batFill * b.span * b.span * batAspect
+    }
+    if area > peak { peak = area; peakAt = t }
+}
+let peakCover = peak / (screen.width * screen.height)
+check("at its peak the swarm all but covers the screen", peakCover > 1.2,
+      String(format: "wings %.2fx the screen at %.2f s", peakCover, peakAt))
+check("the swarm is over in a few seconds", swarm.duration < 4,
+      String(format: "%.2f s", swarm.duration))
+
+// --- The Batman charm pours a window in, near side first --------------------
+// Like a genie into its lamp: whole at the start, all of it gone in at the
+// end, the side nearest the charm leading, and never folding over itself.
+
+let pourFrom = CGRect(x: 200, y: 150, width: 800, height: 520)
+let charmCentre = CGPoint(x: 1250, y: 520)
+let pour = Pour(window: pourFrom, into: charmCentre, columns: Pour.runsSideways(from: pourFrom, to: charmCentre))
+let strips = 48
+let whole = (0..<strips).map { pour.strip($0, of: strips, at: 0) }
+let startsWhole = whole.allSatisfy { $0.opacity == 1 && abs($0.rect.minY - pourFrom.minY) < 0.01 && abs($0.rect.maxY - pourFrom.maxY) < 0.01 }
+    && abs(whole[0].rect.minX - pourFrom.minX) < 1 && abs(whole[strips - 1].rect.maxX - pourFrom.maxX) < 1
+check("a pour starts as the whole window", startsWhole)
+let pouredIn = (0..<strips).map { pour.strip($0, of: strips, at: 1) }
+check("a pour ends with all of it in the charm",
+      pouredIn.allSatisfy { $0.opacity < 0.01 && abs($0.rect.midX - charmCentre.x) < 1 && $0.rect.height < 0.5 })
+// The near side is in by just past halfway, while the far side has barely moved.
+let halfway = (0..<strips).map { pour.strip($0, of: strips, at: 0.55) }
+check("the side nearest the charm goes first",
+      halfway[strips - 1].opacity < 0.01 && halfway[0].opacity == 1)
+var folds = false
+for step in 1..<40 {
+    let s = (0..<strips).map { pour.strip($0, of: strips, at: CGFloat(step) / 40).rect.midX }
+    folds = folds || zip(s, s.dropFirst()).contains { $0 > $1 + 0.01 }
+}
+check("a pour never folds over itself", !folds)
+check("the grip goes in with the window", pour.point(CGPoint(x: 600, y: 168), at: 1).dist(charmCentre) < 0.5)
+
+// --- A web of cracks breaks glass right across -------------------------------
+// The Hulk's blows crack the window from under his feet. A web must reach
+// everything within its reach, its shards fitting together with no holes and
+// its rays never crossing.
+
+var crackRNG = SplitMix64(seed: 11)
+let blow = CGPoint(x: 460, y: 410)
+let corners = [CGPoint.zero, CGPoint(x: screen.width, y: 0), CGPoint(x: 0, y: screen.height),
+               CGPoint(x: screen.width, y: screen.height)]
+let web = CrackWeb(centre: blow, reach: corners.map { blow.dist($0) }.max()!, using: &crackRNG)
+let pieces = web.shards
+check("a blow cracks the glass out to every corner",
+      corners.map { CGPoint(x: min(max($0.x, 1), screen.width - 1), y: min(max($0.y, 1), screen.height - 1)) }
+          .allSatisfy { c in pieces.contains { contains($0, c) } })
+var holes = 0
+for gx in stride(from: 5.0, to: Double(screen.width), by: 37) {
+    for gy in stride(from: 5.0, to: Double(screen.height), by: 37) {
+        let p = CGPoint(x: gx, y: gy)
+        if !pieces.contains(where: { contains($0, p) }) { holes += 1 }
+    }
+}
+check("its shards fit together with no holes", holes == 0, "\(pieces.count) shards, \(holes) gaps")
+var raysCross = false
+for k in 1..<web.rays[0].count {
+    let turns = web.rays.map { atan2(Double($0[k].y - blow.y), Double($0[k].x - blow.x)) }
+    let steps = zip(turns, turns.dropFirst() + [turns[0]]).map { b, a -> Double in
+        var d = a - b
+        while d < 0 { d += 2 * .pi }
+        return d
+    }
+    raysCross = raysCross || abs(steps.reduce(0, +) - 2 * .pi) > 0.001
+}
+check("its cracks never cross", !raysCross)
+
+// --- A blow smashes the wall ------------------------------------------------
+// Each wall-smash blow must leave a crater round where it landed, cracks that
+// fork and run a good way across the screen, and every piece it knocks loose,
+// thrown out or crumbling, fallen clear of the screen in the 1.3 s it's given.
+
+var rubbleRNG = SplitMix64(seed: 21)
+let crater = Crater(centre: CGPoint(x: 460, y: 220), radius: 74, bounds: CGRect(origin: .zero, size: screen), using: &rubbleRNG)
+check("a blow leaves a crater round where it landed", contains(crater.rim, crater.centre))
+let farthest = crater.cracks.flatMap(\.points).map { $0.dist(crater.centre) }.max() ?? 0
+let diagonal = (screen.width * screen.width + screen.height * screen.height).squareRoot()
+check("its cracks run a good way across the screen", farthest > diagonal * 0.4,
+      String(format: "%.0f pt of a %.0f pt diagonal", farthest, diagonal))
+check("its cracks fork as they go", crater.cracks.count > 12, "\(crater.cracks.count) cracks")
+check("everything it knocks loose falls clear of the screen",
+      (crater.thrown + crater.crumbs).allSatisfy { Crater.position(of: $0, after: 1.3).y > screen.height })
+
+// --- A window swung like cloth ----------------------------------------------
+// The sheet the Hulk smashes about: held by the middle of one edge it must
+// stay in his fist and hold out from it like a rubber mat, not hang like a rag;
+// swung down hard it must slam onto the floor without going through it, and
+// say how hard, without pulling out long or folding over; let go, it must fly
+// off at the speed it was thrown.
+
+func sheet() -> Cloth {
+    let c = Cloth(columns: 14, rows: 9, width: 340, height: 212, topLeft: SIMD2(400, 700))
+    c.floor = 100
+    return c
+}
+let held = [3, 4, 5].map { $0 * 14 }
+/// The fist, at `at`, the sheet leaving it along `toward`, as the Hulk holds it.
+func grips(_ at: SIMD2<Float>, toward: SIMD2<Float> = SIMD2(1, 0)) -> [Int: SIMD2<Float>] {
+    let d = simd_normalize(toward), down = SIMD2(d.y, -d.x)
+    var out: [Int: SIMD2<Float>] = [:]
+    for (k, i) in held.enumerated() { out[i] = at + down * (Float(k - 1) * 26.5) }
+    return out
+}
+/// How long its middle row is, against how long it was.
+func middleLength(_ c: Cloth) -> Float {
+    (0..<13).reduce(Float(0)) { $0 + simd_distance(c.points[4 * 14 + $1], c.points[4 * 14 + $1 + 1]) } / 340
+}
+/// Whether any column of it has crossed the next.
+func folded(_ c: Cloth) -> Bool {
+    func cross(_ u: SIMD2<Float>, _ v: SIMD2<Float>) -> Float { u.x * v.y - u.y * v.x }
+    return (0..<13).contains { col in
+        let a0 = c.points[col], a1 = c.points[8 * 14 + col], b0 = c.points[col + 1], b1 = c.points[8 * 14 + col + 1]
+        return cross(a1 - a0, b0 - a0) * cross(a1 - a0, b1 - a0) < 0 && cross(b1 - b0, a0 - b0) * cross(b1 - b0, a1 - b0) < 0
+    }
+}
+
+let mat = sheet()
+let fist = SIMD2<Float>(400, 594)
+mat.hold(grips(fist))
+for _ in 0..<240 { mat.advance(1.0 / 60) }
+let tip = mat.points[4 * 14 + 13]
+check("a held sheet stays in the fist", held.allSatisfy { simd_distance(mat.points[$0], grips(fist)[$0]!) < 0.01 })
+check("and holds out from it like a mat, not a rag", tip.x > fist.x + 280 && tip.y < fist.y - 10,
+      String(format: "far edge %.0f pt out, %.0f pt down", tip.x - fist.x, fist.y - tip.y))
+
+// Over his shoulder and down, the way he swings it, the fist turning with the
+// swing, from held straight up over his head as he has it when he starts.
+let centre = SIMD2<Float>(700, 450)
+let swung = sheet()
+let overhead = centre + SIMD2(0, 120)
+swung.place { col, row in overhead + SIMD2(0, Float(col) * 340 / 13) + SIMD2(Float(row - 4) * 26.5, 0) }
+var throughFloor = false, everFolded = false
+var hardest: Float = 0, longestMiddle: Float = 0
+for k in 0..<90 {
+    let u = min(1, Float(k + 1) / 25)
+    let a = Float.pi / 2 + (Float.pi * 1.22 - Float.pi / 2) * pow(u, 1.8)
+    let hand = centre + 120 * SIMD2(cos(a), sin(a))
+    swung.hold(grips(hand, toward: hand - centre))
+    swung.advance(1.0 / 60)
+    throughFloor = throughFloor || swung.points.contains { $0.y < swung.floor - 0.001 }
+    everFolded = everFolded || folded(swung)
+    longestMiddle = max(longestMiddle, middleLength(swung))
+    hardest = max(hardest, swung.landings.map(\.speed).max() ?? 0)
+    swung.landings.removeAll()
+}
+check("swung down, it slams into the floor", hardest > 900, String(format: "%.0f pt/s", hardest))
+check("and never goes through it", !throughFloor)
+check("nor pulls out long doing it", longestMiddle < 1.01, String(format: "up to %.1f%% long", (longestMiddle - 1) * 100))
+check("nor folds over itself", !everFolded)
+
+let thrown = sheet()
+thrown.hold(grips(fist))
+thrown.advance(1.0 / 60)
+let before = thrown.points.reduce(SIMD2<Float>(0, 0), +) / Float(thrown.points.count)
+thrown.release(velocity: SIMD2(1500, 300))
+for _ in 0..<6 { thrown.advance(1.0 / 60) }
+let flown = thrown.points.reduce(SIMD2<Float>(0, 0), +) / Float(thrown.points.count) - before
+check("let go, it flies off as thrown", abs(flown.x - 150) < 15, String(format: "%.0f pt in 0.1 s", flown.x))
 
 // --- Robustness -------------------------------------------------------------
 

@@ -58,6 +58,39 @@ struct WebTarget {
         let info = CGWindowListCopyWindowInfo(.optionIncludingWindow, windowID) as? [[String: Any]]
         return info?.first?[kCGWindowIsOnscreen as String] as? Bool ?? false
     }
+
+    /// Where a line sent from `h` should land: the title bar, at the point
+    /// nearest `h` but kept to its middle half so the window hangs from
+    /// somewhere near its centre. With nothing to aim at, a shot toward the
+    /// middle of the screen that comes back empty.
+    static func aim(at target: WebTarget?, from h: CGPoint, in area: CGRect) -> CGPoint {
+        let p: CGPoint
+        if let f = target?.frame {
+            p = CGPoint(x: min(max(h.x, f.minX + f.width * 0.25), f.maxX - f.width * 0.25),
+                        y: f.minY + min(18, f.height * 0.1))
+        } else {
+            p = h + unit(CGPoint(x: area.width / 2, y: area.height * 0.6) - h) * 280
+        }
+        return CGPoint(x: min(max(p.x, 8), area.width - 8), y: min(max(p.y, 8), area.height - 8))
+    }
+
+    /// Makes the window's double off the main thread, while whatever is going
+    /// for it is still on its way. The card is only drawn when there is no
+    /// snapshot to be had.
+    func standIn(on screen: NSScreen, _ arrived: @escaping @MainActor (CGImage?, _ isSnapshot: Bool) -> Void) {
+        let icon = app.icon, label = app.localizedName ?? ""
+        let scale = screen.backingScaleFactor, appearance = NSApp.effectiveAppearance
+        let id = windowID, size = frame.size
+        Task { @MainActor in
+            let snapshot = await WindowSnapshot.capture(id)
+            var image = snapshot
+            if image == nil {
+                image = await StandInCard.render(size: size, scale: scale, icon: icon,
+                                                 name: label, appearance: appearance)
+            }
+            arrived(image, snapshot != nil)
+        }
+    }
 }
 
 // MARK: Snapshot
@@ -135,6 +168,119 @@ enum StandInCard {
         }
         NSGraphicsContext.restoreGraphicsState()
         return ctx.makeImage()
+    }
+}
+
+/// A window's double on screen, over a drop shadow like a real window's.
+enum StandIn {
+    static func draw(_ c: inout GraphicsContext, _ image: Image, in r: CGRect, fade: CGFloat) {
+        var c = c
+        c.opacity *= Double(fade)
+        shadow(&c, r)
+        c.draw(image, in: r)
+    }
+
+    /// Concentric outlines rather than a blur filter: blurring the shadow of a
+    /// full-size window means recomputing millions of pixels every frame.
+    static func shadow(_ c: inout GraphicsContext, _ r: CGRect) {
+        for i in 0..<10 {
+            let d = 1.25 + CGFloat(i) * 2.5
+            let ring = r.insetBy(dx: -d, dy: -d).offsetBy(dx: 0, dy: 6)
+            let fall = 1 - CGFloat(i) / 10
+            c.stroke(Path(roundedRect: ring, cornerRadius: 12 + d, style: .continuous),
+                     with: .color(.black.opacity(0.14 * fall * fall)), lineWidth: 2.6)
+        }
+    }
+}
+
+/// Getting a window out of the way so its stand-in can be thrown about: cover
+/// it with the stand-in, hide the app once the cover has shown for a few
+/// frames, then wait until the window has really gone. The web yank does the
+/// same steps inline; the reasons for each are there.
+struct Takedown {
+    enum Outcome { case gone, failed }
+
+    let target: WebTarget
+    private(set) var standIn: Image?
+    private(set) var picture: CGImage?
+    private(set) var covered: Double?
+    private var settled = false
+    private var lead = 0.06
+    private var hideSent: Double?
+    private var done = false
+
+    /// How long to wait for the stand-in, and then for the app to hide.
+    private let patience = 0.45
+    private let hidePatience = 0.5
+
+    init(target: WebTarget) { self.target = target }
+
+    /// A snapshot is a pixel-exact double and can swap in almost at once; a
+    /// card is plainly not the window, so it fades in over it instead.
+    mutating func arrived(_ image: CGImage?, isSnapshot: Bool) {
+        picture = image
+        standIn = image.map { Image(decorative: $0, scale: 1) }
+        lead = isSnapshot ? 0.06 : 0.14
+        settled = true
+    }
+
+    /// Steps it along at time `t`, having started at `begun`. Says once when
+    /// the window has gone, so its stand-in is free to move, or has failed.
+    mutating func advance(_ t: Double, since begun: Double) -> Outcome? {
+        guard !done, t >= begun else { return nil }
+        if covered == nil {
+            guard settled || t >= begun + patience else { return nil }
+            // Without a double to move, hiding the app would just blink it out.
+            guard standIn != nil else { done = true; return .failed }
+            covered = t
+        }
+        if let c = covered, hideSent == nil, t >= c + lead {
+            // The result can't be trusted on macOS 26, so the window is watched instead.
+            _ = target.app.hide()
+            hideSent = t
+        }
+        if let h = hideSent {
+            if !target.isOnScreen { done = true; return .gone }
+            if t >= h + hidePatience { done = true; standIn = nil; return .failed }
+        }
+        return nil
+    }
+
+    /// The stand-in fading up over the window.
+    func cover(_ t: Double) -> CGFloat {
+        covered.map { CGFloat(min(1, (t - $0) / lead)) } ?? 0
+    }
+}
+
+/// A stand-in cut into strips across the way it will be poured (see Pour),
+/// once, so that a frame only places them.
+struct Genie {
+    let strips: [Image]
+    let columns: Bool
+
+    /// `size` is the window's in points: a strip every few of them keeps the
+    /// funnel's edges smooth.
+    init(_ image: CGImage, size: CGSize, columns: Bool) {
+        let n = min(max(Int((columns ? size.width : size.height) / 6), 32), 160)
+        let length = CGFloat(columns ? image.width : image.height)
+        strips = (0..<n).compactMap { j in
+            let a = (length * CGFloat(j) / CGFloat(n)).rounded(.down)
+            let b = (length * CGFloat(j + 1) / CGFloat(n)).rounded(.down)
+            let r = columns ? CGRect(x: a, y: 0, width: max(1, b - a), height: CGFloat(image.height))
+                            : CGRect(x: 0, y: a, width: CGFloat(image.width), height: max(1, b - a))
+            return image.cropping(to: r).map { Image(decorative: $0, scale: 1) }
+        }
+        self.columns = columns
+    }
+
+    func draw(_ ctx: inout GraphicsContext, _ pour: Pour, at u: CGFloat) {
+        for (j, strip) in strips.enumerated() {
+            let (rect, opacity) = pour.strip(j, of: strips.count, at: u)
+            guard opacity > 0.01, rect.width > 0.1, rect.height > 0.1 else { continue }
+            var c = ctx
+            c.opacity *= Double(opacity)
+            c.draw(strip, in: rect)
+        }
     }
 }
 
@@ -346,22 +492,7 @@ final class WebShot {
 
     private func drawStandIn(_ c: inout GraphicsContext, _ r: CGRect, fade: CGFloat) {
         guard let standIn else { return }
-        var c = c
-        c.opacity *= Double(fade)
-        drawShadow(&c, r)
-        c.draw(standIn, in: r)
-    }
-
-    /// Concentric outlines rather than a blur filter: blurring the shadow of a
-    /// full-size window means recomputing millions of pixels every frame.
-    private func drawShadow(_ c: inout GraphicsContext, _ r: CGRect) {
-        for i in 0..<10 {
-            let d = 1.25 + CGFloat(i) * 2.5
-            let ring = r.insetBy(dx: -d, dy: -d).offsetBy(dx: 0, dy: 6)
-            let fall = 1 - CGFloat(i) / 10
-            c.stroke(Path(roundedRect: ring, cornerRadius: 12 + d, style: .continuous),
-                     with: .color(.black.opacity(0.14 * fall * fall)), lineWidth: 2.6)
-        }
+        StandIn.draw(&c, standIn, in: r, fade: fade)
     }
 
     /// A small orb web where the strand sticks, drawn in the window's own
