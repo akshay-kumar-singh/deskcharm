@@ -40,8 +40,17 @@ It lives in the menu bar as `✦` — no Dock icon, no window chrome.
 - **Throw the Hulk about hard** and three blows punch into the screen as if it
   were a concrete wall: craters, cracks forking across it, chunks and dust
   thrown out. It holds a moment, then the craters crumble away. Paint only.
+- **Double-click Thor** and the sky closes in, a bolt of lightning comes down
+  into the front window's title bar, and the window, crawling with arcs of
+  electricity, is drawn into the charm along a crackling line of lightning
+  like Mjolnir being called back to the hand. It goes in a blue-white flash.
+  The app is hidden, as with the web yank.
+- **Throw Thor about hard** and a thunderstorm rolls over the screen: the sky
+  darkens, rain sheets down, and forked lightning flashes with thunder rolling
+  in behind each strike. The last bolt goes straight into the charm and jolts
+  it. Five seconds, paint only, like the web blast.
 - **Menu bar `✦`** → pick charm, size, chain length, screen position, and (with
-  Spider-Man, Batman or the Hulk) turn **Sound Effects** on or off.
+  Spider-Man, Batman, the Hulk or Thor) turn **Sound Effects** on or off.
 - **Quit** from the same menu.
 
 The window is large and transparent, but only accepts clicks while the pointer
@@ -54,7 +63,7 @@ Another app's window can't be moved from outside it, so what flies is a
 stand-in, and the app is hidden underneath it the moment it's covered. With
 Screen Recording allowed, the stand-in is a snapshot of the real window;
 without it, a card with the app's icon and name. Turn it on from
-`✦` → **Allow Window Snapshots…** (shown while Spider-Man, Batman or the Hulk
+`✦` → **Allow Window Snapshots…** (shown while Spider-Man, Batman, the Hulk or Thor
 is selected), then relaunch. Because the build is ad-hoc signed, macOS treats every rebuild as a
 new app and the permission has to be granted again.
 
@@ -243,3 +252,28 @@ sources and licences. The Hulk himself is Marvel's design, so the same
 personal-use caution applies.
 
 The code here is mine and carries no such restriction.
+
+## Thunderstorm
+
+Like the bat swarm, the whole storm is worked out when it starts (`Storm.swift`,
+no AppKit, so the tests run it headless) and a frame is only lookups and draws
+(`ThorStorm.swift`). Each bolt is cut by midpoint displacement — split a
+segment, knock its middle sideways, repeat six times — which gives the kinks at
+every scale that lightning has, with forks leaving the trunk lower down. It
+flashes the way lightning does: hard, a dip, a second flare, then gone, drawn as
+a wide cold glow under a white core. Rain is ~950 slanted streaks in three
+depth bands, one stroke per band. The thunder (a crack, a boom and a rumble in
+swells, synthesised like the other sounds) arrives a quarter second after each
+flash, as sound does, and the last bolt aims at wherever the charm is swinging.
+
+## Thor strike
+
+The web yank's machinery again — the same window, stand-in, `Takedown` and
+genie pour — with the bolt cut by the same midpoint displacement as the storm's
+(`Storm.bolt`) and drawn by the same `Lightning` code. The sky darkens over a
+quarter second and the bolt lands on the title bar; the stand-in goes up under
+its flash and the window shudders while arcs jump about its edges. Once the app
+is hidden the arcs stop and one thick line of lightning, redrawn thirty times a
+second so it crackles, runs from the charm to wherever the window is gripped
+as it is poured in. A miss, or an app that won't hide, lets the bolt fall on
+nothing.

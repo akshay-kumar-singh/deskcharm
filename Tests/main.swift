@@ -481,6 +481,60 @@ for _ in 0..<6 { thrown.advance(1.0 / 60) }
 let flown = thrown.points.reduce(SIMD2<Float>(0, 0), +) / Float(thrown.points.count) - before
 check("let go, it flies off as thrown", abs(flown.x - 150) < 15, String(format: "%.0f pt in 0.1 s", flown.x))
 
+// --- The thunderstorm: bolts that read as lightning, rain that fills the screen
+
+var stormRNG = SplitMix64(seed: 11)
+let stormScreen = CGSize(width: 1512, height: 982)
+let hanging = CGPoint(x: 1100, y: 420)
+let storm = Storm(size: stormScreen, charm: hanging, using: &stormRNG)
+
+check("the storm has five bolts, in order", storm.bolts.count == 5
+      && zip(storm.bolts, storm.bolts.dropFirst()).allSatisfy { $0.time < $1.time })
+check("every bolt flashes and dies away before the storm does",
+      storm.bolts.allSatisfy { $0.time + Storm.linger < storm.duration - 1 })
+check("each bolt runs from above the screen to the ground",
+      storm.bolts.allSatisfy { $0.trunk.first!.y < 0 && $0.trunk.last! == $0.ground })
+/// How far a bolt strays from the straight line between its ends, at most.
+func straying(_ b: Storm.Bolt) -> CGFloat {
+    let a = b.trunk[0], z = b.trunk[b.trunk.count - 1]
+    let len = hypot(z.x - a.x, z.y - a.y)
+    var most: CGFloat = 0
+    for p in b.trunk {
+        let cross = (z.x - a.x) * (a.y - p.y) - (a.x - p.x) * (z.y - a.y)
+        most = max(most, abs(cross) / len)
+    }
+    return most
+}
+check("a bolt is jagged, not a straight line", storm.bolts.allSatisfy { $0.trunk.count > 30 && straying($0) > 8 })
+check("most bolts fork", storm.bolts.filter { !$0.forks.isEmpty }.count >= 4)
+check("the last bolt lands on the charm", storm.bolts.last.map { $0.charm && $0.ground == hanging } ?? false)
+check("and no other does", storm.bolts.dropLast().allSatisfy { !$0.charm })
+let noCharm = Storm(size: stormScreen, charm: nil, using: &stormRNG)
+check("with no charm to aim at, none claims to", noCharm.bolts.allSatisfy { !$0.charm })
+
+check("it starts and ends under a clear sky", storm.gloom(at: 0) == 0 && storm.gloom(at: storm.duration) == 0)
+check("and is fully dark in between", storm.gloom(at: storm.duration / 2) > 0.99)
+check("a flash is hard, dips, then flares again",
+      Storm.flash(0.02) == 1 && Storm.flash(0.09) < 0.4 && Storm.flash(0.15) > 0.7 && Storm.flash(0.6) == 0)
+check("no flash before the first bolt", storm.flash(at: storm.bolts[0].time - 0.01) == 0)
+
+var rainOnScreen = true
+var rainLaps = true
+for d in storm.drops {
+    for t in stride(from: 0.0, through: storm.duration, by: 0.25) {
+        let p = storm.position(d, at: t)
+        rainOnScreen = rainOnScreen && p.x >= -0.25 * stormScreen.width - 1 && p.x <= stormScreen.width + 1
+            && p.y >= -d.length - 1 && p.y <= stormScreen.height + d.length + 1
+    }
+    let a = storm.position(d, at: 0).y, b = storm.position(d, at: 0.1).y
+    rainLaps = rainLaps && (b > a || b < a - stormScreen.height / 2)     // falling, or wrapped to the top
+}
+check("rain stays on the screen all storm", rainOnScreen, "\(storm.drops.count) drops")
+check("and only ever falls", rainLaps)
+var covered = Set<Int>()
+for d in storm.drops { covered.insert(Int(storm.position(d, at: 2).x / 100)) }
+check("it falls across the whole width", covered.count >= 14, "\(covered.count) columns of 100 pt")
+
 // --- Robustness -------------------------------------------------------------
 
 let g = makeSim(breeze: 1)

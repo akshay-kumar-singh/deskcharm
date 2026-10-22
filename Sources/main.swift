@@ -80,7 +80,10 @@ struct CharmHang {
     private static let custom: [String: CharmHang] = [
         // From the loose end of his web, turned so his weight sits straight
         // under it: the web then leads down from the chain into his fist.
-        "Spider-Man-Swinging": CharmHang(attach: CGPoint(x: 0.012, y: 0.003), tilt: 0.46)
+        "Spider-Man-Swinging": CharmHang(attach: CGPoint(x: 0.012, y: 0.003), tilt: 0.46),
+        // From the top of the rope he hangs on, turned so his weight sits
+        // nearly under it and the rope runs up the chain.
+        "Thor": CharmHang(attach: CGPoint(x: 0.097, y: 0), tilt: -0.25)
     ]
 
     static func of(_ charm: String) -> CharmHang {
@@ -135,7 +138,7 @@ final class CharmSettings: ObservableObject {
     }
 
     /// Whether the charm does anything when double-clicked or thrown about.
-    var hasGadgets: Bool { WebHands.supports(charm) || BatGear.supports(charm) || HulkGear.supports(charm) }
+    var hasGadgets: Bool { WebHands.supports(charm) || BatGear.supports(charm) || HulkGear.supports(charm) || ThorGear.supports(charm) }
 }
 
 // MARK: - View
@@ -297,6 +300,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var webs: WebController!
     private var bats: BatController!
     private var hulk: HulkController!
+    private var thor: ThorController!
 
     private let winW: CGFloat = 560
     private let winH: CGFloat = 820
@@ -323,12 +327,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         webs = WebController(charm: window, sim: sim, settings: settings)
         bats = BatController(charm: window, sim: sim, settings: settings)
         hulk = HulkController(charm: window, sim: sim, settings: settings)
+        thor = ThorController(charm: window, sim: sim, settings: settings)
         SoundFX.shared.enabled = settings.sounds
         // Each controller only answers for its own charms.
         window.contentView = NSHostingView(rootView: CharmView(
             settings: settings, sim: sim,
-            onDoubleClick: { [weak self] in self?.webs.yank(); self?.bats.towWindow(); self?.hulk.smashWindow() },
-            onManhandled: { [weak self] in self?.webs.blast(); self?.bats.releaseBats(); self?.hulk.smashScreen() }))
+            onDoubleClick: { [weak self] in self?.webs.yank(); self?.bats.towWindow(); self?.hulk.smashWindow(); self?.thor.strikeWindow() },
+            onManhandled: { [weak self] in self?.webs.blast(); self?.bats.releaseBats(); self?.hulk.smashScreen(); self?.thor.callStorm() }))
         window.orderFrontRegardless()
 
         buildMenu()
@@ -427,7 +432,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if settings.hasGadgets && !WindowSnapshot.allowed {
             let snap = NSMenuItem(title: "Allow Window Snapshots…", action: #selector(allowSnapshots), keyEquivalent: "")
             snap.target = self
-            snap.toolTip = "Lets the web, the grapple or the Hulk take the real window instead of a card. Needs Screen Recording; takes effect after a relaunch."
+            snap.toolTip = "Lets the web, the grapple, the Hulk or Thor's lightning take the real window instead of a card. Needs Screen Recording; takes effect after a relaunch."
             menu.addItem(snap)
         }
         if settings.hasGadgets {
