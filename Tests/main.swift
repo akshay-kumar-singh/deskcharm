@@ -481,6 +481,33 @@ for _ in 0..<6 { thrown.advance(1.0 / 60) }
 let flown = thrown.points.reduce(SIMD2<Float>(0, 0), +) / Float(thrown.points.count) - before
 check("let go, it flies off as thrown", abs(flown.x - 150) < 15, String(format: "%.0f pt in 0.1 s", flown.x))
 
+// --- Stickers ---------------------------------------------------------------
+
+/// An alpha mask, rows top first, solid wherever `inside` says.
+func mask(_ w: Int, _ h: Int, _ inside: (Int, Int) -> Bool) -> [UInt8] {
+    (0..<h).flatMap { y in (0..<w).map { x in inside(x, y) ? 255 : 0 } }
+}
+func disc(_ cx: Int, _ cy: Int, _ r: Int) -> (Int, Int) -> Bool {
+    { x, y in (x - cx) * (x - cx) + (y - cy) * (y - cy) <= r * r }
+}
+
+let blob = mask(200, 160, disc(90, 100, 40))
+let box = StickerShape.bounds(alpha: blob, width: 200, height: 160)
+check("a sticker is trimmed to what's opaque", box == CGRect(x: 50, y: 60, width: 81, height: 81),
+      box.map { "\($0)" } ?? "nothing")
+check("and an empty one has nothing to trim to", StickerShape.bounds(alpha: mask(40, 40) { _, _ in false }, width: 40, height: 40) == nil)
+
+let hung = StickerShape.attach(alpha: blob, width: 200, height: 160)
+check("a sticker hangs from the top of its subject",
+      abs(hung.x * 200 - 90.5) < 1.5 && abs(hung.y * 160 - 60) < 1.5,
+      String(format: "at %.0f, %.0f", hung.x * 200, hung.y * 160))
+
+// Two heads side by side: the balance line falls in the notch between them.
+let pair = mask(200, 160) { x, y in disc(70, 80, 40)(x, y) || disc(130, 80, 40)(x, y) }
+let paired = StickerShape.attach(alpha: pair, width: 200, height: 160)
+check("and from a crown, not down in a notch", abs(paired.y * 160 - 40) < 2,
+      String(format: "at %.0f, %.0f", paired.x * 200, paired.y * 160))
+
 // --- Robustness -------------------------------------------------------------
 
 let g = makeSim(breeze: 1)

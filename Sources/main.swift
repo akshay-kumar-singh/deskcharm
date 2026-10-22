@@ -32,26 +32,46 @@ final class Tracer {
 final class CharmStore {
     static let shared = CharmStore()
 
+    /// The built-in charms, then the user's own.
     private(set) var names: [String] = []
+    private(set) var builtIn: [String] = []
     private var images: [String: Image] = [:]
     private var aspects: [String: CGFloat] = [:]
 
     private init() {
-        guard let dir = Bundle.main.resourceURL?.appendingPathComponent("Charms"),
-              let files = try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)
-        else { return }
-        for f in files where f.pathExtension.lowercased() == "png" {
-            guard let ns = NSImage(contentsOf: f) else { continue }
-            let key = f.deletingPathExtension().lastPathComponent
-            images[key] = Image(nsImage: ns).interpolation(.high).antialiased(true)
-            aspects[key] = ns.size.height > 0 ? ns.size.width / ns.size.height : 0.6
-            names.append(key)
+        if let dir = Bundle.main.resourceURL?.appendingPathComponent("Charms"),
+           let files = try? FileManager.default.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil) {
+            for f in files where f.pathExtension.lowercased() == "png" {
+                guard let ns = NSImage(contentsOf: f) else { continue }
+                let key = f.deletingPathExtension().lastPathComponent
+                keep(ns, as: key)
+                builtIn.append(key)
+            }
         }
-        names.sort()
+        builtIn.sort()
+        reloadCustom()
+    }
+
+    /// Picks the user's charms up again after one is added or removed.
+    func reloadCustom() {
+        for n in names where !builtIn.contains(n) { images[n] = nil; aspects[n] = nil }
+        var custom: [String] = []
+        for c in CustomCharms.shared.all {
+            guard let ns = NSImage(contentsOf: CustomCharms.shared.imageURL(c)) else { continue }
+            keep(ns, as: c.key)
+            custom.append(c.key)
+        }
+        names = builtIn + custom
+    }
+
+    private func keep(_ ns: NSImage, as key: String) {
+        images[key] = Image(nsImage: ns).interpolation(.high).antialiased(true)
+        aspects[key] = ns.size.height > 0 ? ns.size.width / ns.size.height : 0.6
     }
 
     func image(_ n: String) -> Image? { images[n] }
     func aspect(_ n: String) -> CGFloat { aspects[n] ?? 0.6 }
+    func title(_ n: String) -> String { CustomCharms.shared.charm(n)?.name ?? n.replacingOccurrences(of: "-", with: " ") }
 }
 
 /// Pictures the charms' effects are drawn with, from the bundle's Effects
@@ -84,7 +104,9 @@ struct CharmHang {
     ]
 
     static func of(_ charm: String) -> CharmHang {
-        custom[charm] ?? CharmHang(attach: CGPoint(x: 0.5, y: 0), tilt: 0)
+        // A sticker hangs from the top of its subject, found when it was made.
+        if let made = CustomCharms.shared.charm(charm) { return CharmHang(attach: made.attach, tilt: 0) }
+        return custom[charm] ?? CharmHang(attach: CGPoint(x: 0.5, y: 0), tilt: 0)
     }
 
     /// The artwork's frame around the chain's tip, before it is turned. It
@@ -110,10 +132,12 @@ final class CharmSettings: ObservableObject {
 
     private let d = UserDefaults.standard
 
+    static var fallbackCharm: String {
+        CharmStore.shared.names.first(where: { $0.contains("Iron") }) ?? CharmStore.shared.names.first ?? ""
+    }
+
     init() {
-        let fallback = CharmStore.shared.names.first(where: { $0.contains("Iron") })
-            ?? CharmStore.shared.names.first ?? ""
-        charm = d.string(forKey: "charm").flatMap { CharmStore.shared.names.contains($0) ? $0 : nil } ?? fallback
+        charm = d.string(forKey: "charm").flatMap { CharmStore.shared.names.contains($0) ? $0 : nil } ?? Self.fallbackCharm
         let h = d.double(forKey: "charmHeight")
         charmHeight = h > 0 ? CGFloat(h) : 200
         let r = d.double(forKey: "ropeLength")
@@ -134,8 +158,10 @@ final class CharmSettings: ObservableObject {
             .applying(hang.placement(tip: sim.tip, turn: sim.charmRotation))
     }
 
+    var powers: CharmPowers { CharmPowers.of(charm) }
+
     /// Whether the charm does anything when double-clicked or thrown about.
-    var hasGadgets: Bool { WebHands.supports(charm) || BatGear.supports(charm) || HulkGear.supports(charm) }
+    var hasGadgets: Bool { powers.any }
 }
 
 // MARK: - View
@@ -270,7 +296,7 @@ struct CharmView: View {
         let hang = CharmHang.of(settings.charm)
         let art = hang.rect(width: h * CharmStore.shared.aspect(settings.charm), height: h)
 
-        if WebHands.supports(settings.charm) {
+        if settings.powers.uses(.spiderMan) {
             for ghost in trail.ghosts() {
                 var g = ctx
                 g.opacity = ghost.opacity
@@ -324,11 +350,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         bats = BatController(charm: window, sim: sim, settings: settings)
         hulk = HulkController(charm: window, sim: sim, settings: settings)
         SoundFX.shared.enabled = settings.sounds
-        // Each controller only answers for its own charms.
         window.contentView = NSHostingView(rootView: CharmView(
             settings: settings, sim: sim,
-            onDoubleClick: { [weak self] in self?.webs.yank(); self?.bats.towWindow(); self?.hulk.smashWindow() },
-            onManhandled: { [weak self] in self?.webs.blast(); self?.bats.releaseBats(); self?.hulk.smashScreen() }))
+            onDoubleClick: { [weak self] in self?.doubleClicked() },
+            onManhandled: { [weak self] in self?.manhandled() }))
         window.orderFrontRegardless()
 
         buildMenu()
@@ -349,6 +374,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 Tracer.shared.dump()
                 NSApp.terminate(nil)
             }
+        }
+    }
+
+    /// Each charm's powers decide which hero answers: its own, or for a
+    /// custom charm whichever the user picked for each.
+    private func doubleClicked() {
+        switch settings.powers.doubleClick {
+        case .spiderMan: webs.yank()
+        case .batman: bats.towWindow()
+        case .hulk: hulk.smashWindow()
+        case nil: break
+        }
+    }
+
+    private func manhandled() {
+        switch settings.powers.shake {
+        case .spiderMan: webs.blast()
+        case .batman: bats.releaseBats()
+        case .hulk: hulk.smashScreen()
+        case nil: break
         }
     }
 
@@ -378,16 +423,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let charms = NSMenu()
         for n in CharmStore.shared.names {
-            let it = NSMenuItem(title: n.replacingOccurrences(of: "-", with: " "),
-                                action: #selector(pickCharm(_:)), keyEquivalent: "")
+            if n == CharmStore.shared.names.first(where: { !CharmStore.shared.builtIn.contains($0) }) {
+                charms.addItem(.separator())
+            }
+            let it = NSMenuItem(title: CharmStore.shared.title(n), action: #selector(pickCharm(_:)), keyEquivalent: "")
             it.target = self
             it.representedObject = n
             it.state = (n == settings.charm) ? .on : .off
             charms.addItem(it)
         }
+        charms.addItem(.separator())
+        let make = NSMenuItem(title: "New Custom Charm…", action: #selector(newCustomCharm), keyEquivalent: "")
+        make.target = self
+        charms.addItem(make)
         let charmItem = NSMenuItem(title: "Charm", action: nil, keyEquivalent: "")
         charmItem.submenu = charms
         menu.addItem(charmItem)
+
+        if let custom = CustomCharms.shared.charm(settings.charm) {
+            menu.addItem(powerMenu("On Double-Click", chosen: custom.doubleClick, title: \.doubleClickTitle,
+                                   action: #selector(pickDoubleClick(_:))))
+            menu.addItem(powerMenu("On Shake", chosen: custom.shake, title: \.shakeTitle,
+                                   action: #selector(pickShake(_:))))
+            let remove = NSMenuItem(title: "Remove “\(custom.name)”…", action: #selector(removeCustomCharm), keyEquivalent: "")
+            remove.target = self
+            menu.addItem(remove)
+        }
 
         let sizes = NSMenu()
         for (label, v) in [("Small", 140.0), ("Medium", 200.0), ("Large", 270.0), ("Huge", 340.0)] {
@@ -441,6 +502,90 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let quit = NSMenuItem(title: "Quit DeskCharm", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         menu.addItem(quit)
         statusItem.menu = menu
+    }
+
+    private func powerMenu(_ label: String, chosen: Power?, title: KeyPath<Power, String>, action: Selector) -> NSMenuItem {
+        let powers = NSMenu()
+        for p in [nil] + Power.allCases.map(Optional.some) {
+            let it = NSMenuItem(title: p?[keyPath: title] ?? "Nothing", action: action, keyEquivalent: "")
+            it.target = self
+            it.representedObject = p
+            it.state = p == chosen ? .on : .off
+            powers.addItem(it)
+        }
+        let item = NSMenuItem(title: label, action: nil, keyEquivalent: "")
+        item.submenu = powers
+        return item
+    }
+
+    @objc private func pickDoubleClick(_ s: NSMenuItem) {
+        CustomCharms.shared.update(settings.charm) { $0.doubleClick = s.representedObject as? Power }
+        buildMenu()
+    }
+
+    @objc private func pickShake(_ s: NSMenuItem) {
+        CustomCharms.shared.update(settings.charm) { $0.shake = s.representedObject as? Power }
+        buildMenu()
+    }
+
+    // MARK: Custom charms
+
+    private var maker: NSWindow?
+
+    @objc private func newCustomCharm() {
+        NSApp.activate()
+        if let maker, maker.isVisible { maker.makeKeyAndOrderFront(nil); return }
+        let model = CharmMakerModel()
+        let view = CharmMakerView(model: model,
+                                  onCancel: { [weak self] in self?.closeMaker() },
+                                  onAdd: { [weak self, unowned model] in self?.addCustomCharm(from: model) })
+        let w = NSWindow(contentViewController: NSHostingController(rootView: view))
+        w.title = "New Custom Charm"
+        w.styleMask = [.titled, .closable]
+        w.isReleasedWhenClosed = false
+        w.center()
+        w.makeKeyAndOrderFront(nil)
+        maker = w
+    }
+
+    /// Hands focus back to the app that had it, which is also the app the
+    /// charm's powers go after.
+    private func closeMaker() {
+        maker?.close()
+        maker = nil
+        NSApp.deactivate()
+    }
+
+    private func addCustomCharm(from model: CharmMakerModel) {
+        guard let made = model.sticker else { return }
+        let name = model.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        do {
+            let c = try CustomCharms.shared.add(made.image, name: name.isEmpty ? "My Charm" : name, attach: made.attach,
+                                                doubleClick: model.doubleClick, shake: model.shake)
+            CharmStore.shared.reloadCustom()
+            settings.charm = c.key
+            buildMenu()
+            closeMaker()
+        } catch {
+            model.failure = "Couldn't save the charm: \(error.localizedDescription)"
+        }
+    }
+
+    @objc private func removeCustomCharm() {
+        guard let c = CustomCharms.shared.charm(settings.charm) else { return }
+        NSApp.activate()
+        let alert = NSAlert()
+        alert.messageText = "Remove “\(c.name)”?"
+        alert.informativeText = "Its sticker will be deleted. This can't be undone."
+        alert.addButton(withTitle: "Remove").hasDestructiveAction = true
+        alert.addButton(withTitle: "Cancel")
+        let confirmed = alert.runModal() == .alertFirstButtonReturn
+        NSApp.deactivate()
+        guard confirmed else { return }
+        CustomCharms.shared.remove(c.key)
+        CharmStore.shared.reloadCustom()
+        settings.charm = CharmSettings.fallbackCharm
+        buildMenu()
     }
 
     @objc private func pickCharm(_ s: NSMenuItem) {

@@ -142,7 +142,7 @@ final class HulkController {
     // MARK: Smash
 
     func smashWindow() {
-        guard slam == nil, HulkGear.supports(settings.charm), let rig = HulkGear.rig,
+        guard slam == nil, let rig = HulkGear.rig,
               let screen = charm.screen ?? NSScreen.main
         else { return }
         let area = screen.frame
@@ -176,7 +176,7 @@ final class HulkController {
     // MARK: Wall smash
 
     func smashScreen() {
-        guard wall == nil, HulkGear.supports(settings.charm), let concrete = HulkGear.concrete,
+        guard wall == nil, let concrete = HulkGear.concrete,
               let screen = charm.screen ?? NSScreen.main
         else { return }
         let area = screen.frame

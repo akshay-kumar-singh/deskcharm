@@ -45,7 +45,7 @@ final class BatController {
     // MARK: Tow
 
     func towWindow() {
-        guard tow == nil, BatGear.supports(settings.charm),
+        guard tow == nil,
               let screen = charm.screen ?? NSScreen.main
         else { return }
         let area = screen.frame
@@ -78,7 +78,7 @@ final class BatController {
     // MARK: Swarm
 
     func releaseBats() {
-        guard swarm == nil, BatGear.supports(settings.charm), !BatGear.bats.isEmpty,
+        guard swarm == nil, !BatGear.bats.isEmpty,
               let screen = charm.screen ?? NSScreen.main
         else { return }
         let area = screen.frame

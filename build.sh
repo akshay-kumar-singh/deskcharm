@@ -10,7 +10,7 @@ mkdir -p build "$APP/Contents/MacOS" "$APP/Contents/Resources/Charms" "$APP/Cont
 
 echo "==> Compiling"
 swiftc -O -swift-version 5 \
-    -framework AppKit -framework SwiftUI -framework ScreenCaptureKit -framework AVFoundation -framework SceneKit \
+    -framework AppKit -framework SwiftUI -framework ScreenCaptureKit -framework AVFoundation -framework SceneKit -framework Vision -framework CoreImage \
     Sources/*.swift -o build/DeskCharm
 
 cp build/DeskCharm "$APP/Contents/MacOS/DeskCharm"

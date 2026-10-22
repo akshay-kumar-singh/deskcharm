@@ -40,6 +40,12 @@ It lives in the menu bar as `✦` — no Dock icon, no window chrome.
 - **Throw the Hulk about hard** and three blows punch into the screen as if it
   were a concrete wall: craters, cracks forking across it, chunks and dust
   thrown out. It holds a moment, then the craters crumble away. Paint only.
+- **Make your own charm**: `✦` → **Charm** → **New Custom Charm…**. Choose or
+  drop in a picture and it's made into a sticker — the subject cut out, with
+  a white die-cut border. Name it, then give it any hero's double-click power
+  and any hero's shake power: Spider-Man's web yank on a double-click and
+  Batman's bat swarm on a shake, say. While it's selected, **On Double-Click**
+  and **On Shake** in the menu change its powers, and **Remove** deletes it.
 - **Menu bar `✦`** → pick charm, size, chain length, screen position, and (with
   Spider-Man, Batman or the Hulk) turn **Sound Effects** on or off.
 - **Quit** from the same menu.
@@ -139,6 +145,25 @@ faster bats rather than more of them, so every display gets the same swarm in
 the same time. Measured live: ~2,800 bats, 1.3 ms of drawing a frame, a steady
 60 fps.
 
+## Custom charms
+
+The sticker is made with Vision's foreground-instance mask (`Sticker.swift`):
+every subject it finds is lifted off the background, the shape grown outward
+for a white border and a little further for a faint rim so it reads on a white
+desktop too, and the whole trimmed and kept at no more than 760 px on its long
+side. A picture with no subject Vision can find, or with **Cut out the
+subject** off, becomes a rounded card. The first cut-out after launch takes
+about 3 s while Vision loads its model; after that, under 150 ms.
+
+The chain is fixed to the highest solid point near the line the sticker's
+weight balances on (`StickerShape.swift`), so it hangs from the top of a head,
+not an empty corner or the notch between two. Spider-Man's webs leave from the
+sticker's middle.
+
+Stickers and their settings live in
+`~/Library/Application Support/DeskCharm/Charms/` — a PNG apiece and
+`charms.json` — not in the app bundle, so they survive a rebuild.
+
 ## Sound
 
 Every effect is synthesised at launch from filtered noise and pitch sweeps —
@@ -166,7 +191,8 @@ cracks that fork and run well across the screen, and nothing left on screen
 once its pieces have fallen; and that the Hulk's sheet stays in his fist and
 holds out from it like a mat, not a rag, and swung down slams into the floor
 without going through it, pulling out long or folding over, then flies off as
-thrown. No display needed.
+thrown; and that a sticker is trimmed to what's opaque and hangs from the top
+of its subject, not down in a notch. No display needed.
 
 ## Layout
 
@@ -190,6 +216,10 @@ Sources/WallSmash.swift manhandled: the screen punched in like concrete
 Sources/Rubble.swift    smashed-concrete geometry — no AppKit, testable headless
 Sources/Shake.swift     tells manhandling from ordinary dragging
 Sources/Sounds.swift    synthesised sound effects
+Sources/CustomCharms.swift  powers, and the user's own charms on disk
+Sources/CharmMaker.swift    the New Custom Charm window
+Sources/Sticker.swift       a picture into a die-cut sticker
+Sources/StickerShape.swift  a sticker's trim and hang point — no AppKit, testable headless
 Tests/main.swift        physics and swarm checks
 Charms/                 extracted art at native resolution
 Charms/hd/              2x Lanczos + unsharp — what ships in the bundle
