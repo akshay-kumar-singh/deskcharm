@@ -1,3 +1,8 @@
+# The app as built by ./build.sh, and its scratch folder (also used by ./test.sh).
+# It's shared through the DeskCharm.dmg on GitHub Releases instead.
+DeskCharm.app/
+build/
+
 # Installed packages and build output of the website (npm install / npm run build)
 node_modules/
 site/dist/
