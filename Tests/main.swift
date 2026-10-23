@@ -508,6 +508,55 @@ let paired = StickerShape.attach(alpha: pair, width: 200, height: 160)
 check("and from a crown, not down in a notch", abs(paired.y * 160 - 40) < 2,
       String(format: "at %.0f, %.0f", paired.x * 200, paired.y * 160))
 
+// --- The symbiote crawls out of the charm and all over the screen ----------
+// Grown from where a charm hangs at the top right of a laptop-sized screen.
+
+var symbioteRNG = SplitMix64(seed: 31)
+let charmAt = CGPoint(x: 1180, y: 330)
+let symbiote = Symbiote(size: screen, from: charmAt, using: &symbioteRNG)
+var crawls = true, onScreen = true
+for t in symbiote.tendrils {
+    for i in 1..<t.points.count {
+        crawls = crawls && t.times[i] > t.times[i - 1] && t.points[i].dist(t.points[i - 1]) <= Symbiote.step + 0.01
+    }
+    onScreen = onScreen && t.points.allSatisfy { CGRect(origin: .zero, size: screen).insetBy(dx: -31, dy: -31).contains($0) }
+}
+// Every tendril starts on the charm, or forks from a point of one that set
+// off before it, at the moment the crawl got there.
+var grownFrom = true
+for (k, t) in symbiote.tendrils.enumerated() {
+    guard let (i, j) = t.parent else { grownFrom = grownFrom && t.points[0] == charmAt; continue }
+    let parent = symbiote.tendrils[i]
+    grownFrom = grownFrom && i < k && parent.points[j] == t.points[0] && parent.times[j] == t.times[0]
+}
+check("the symbiote pours out of the charm", grownFrom && symbiote.tendrils.first?.points.first == charmAt,
+      "\(symbiote.tendrils.count) tendrils")
+check("and crawls, never jumps", crawls)
+check("and stays on the screen", onScreen)
+// Fat, blunt-headed tendrils reaching, not fine roots branching to points.
+let thinnest = symbiote.tendrils.flatMap(\.widths).min() ?? 0
+check("its tendrils are thick to the end, not roots", symbiote.tendrils.count <= Symbiote.maxTendrils && thinnest >= 4,
+      String(format: "%d tendrils, thinnest %.1f pt", symbiote.tendrils.count, thinnest))
+let strandsHold = symbiote.strands.allSatisfy { s in
+    let a = symbiote.tendrils[s.a.tendril].points[s.a.point], b = symbiote.tendrils[s.b.tendril].points[s.b.point]
+    return s.a.tendril != s.b.tendril && Symbiote.strandReach.contains(a.dist(b))
+}
+check("strings of goo join neighbouring tendrils", !symbiote.strands.isEmpty && strandsHold,
+      "\(symbiote.strands.count) strings")
+
+// Sixty-point cells, each counted as covered with a vein within reach of it.
+let veins = symbiote.tendrils.flatMap(\.points)
+var cells = 0, reached = 0
+for x in stride(from: CGFloat(30), to: screen.width, by: 60) {
+    for y in stride(from: CGFloat(30), to: screen.height, by: 60) {
+        cells += 1
+        if veins.contains(where: { abs($0.x - x) < 90 && abs($0.y - y) < 90 }) { reached += 1 }
+    }
+}
+let crawled = Double(reached) / Double(cells)
+check("it crawls all over the screen", crawled > 0.9, String(format: "%.0f%% within reach of a vein", crawled * 100))
+check("in a couple of seconds", symbiote.spread > 1 && symbiote.spread < 2.6, String(format: "%.2f s", symbiote.spread))
+
 // --- Robustness -------------------------------------------------------------
 
 let g = makeSim(breeze: 1)

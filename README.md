@@ -40,6 +40,16 @@ It lives in the menu bar as `✦` — no Dock icon, no window chrome.
 - **Throw the Hulk about hard** and three blows punch into the screen as if it
   were a concrete wall: craters, cracks forking across it, chunks and dust
   thrown out. It holds a moment, then the craters crumble away. Paint only.
+- **Double-click Venom** and his tongue lashes out from his mouth, writhing,
+  and sticks to the front window in a splash of slaver. Then it reels the
+  window in, faster and faster, wobbling as it shrinks, into his mouth, which
+  swallows it with a gulp and a spatter of goo. The app is hidden, as with the
+  web yank.
+- **Throw Venom about hard** and the symbiote breaks loose with a hiss: black,
+  glossy tendrils lunge out of a pool of it welling from the charm and across
+  the screen, thrashing, blunt heads reaching, strings of goo drooping between
+  them. It's alive the whole time, then it's sucked back into the charm, heads
+  first. Paint only.
 - **Make your own charm**: `✦` → **Charm** → **New Custom Charm…**. Choose or
   drop in a picture and it's made into a sticker — the subject cut out, with
   a white die-cut border. Name it, then give it any hero's double-click power
@@ -145,6 +155,42 @@ faster bats rather than more of them, so every display gets the same swarm in
 the same time. Measured live: ~2,800 bats, 1.3 ms of drawing a frame, a steady
 60 fps.
 
+## Venom
+
+The tongue is the web yank's machinery with a different line: the same
+stand-in and hiding (`Takedown`), but what flies out is a tapering tongue
+outlined fresh each frame round a centre line with a wave running along it —
+wild as it shoots, a twitch where it sticks, near taut as it reels in. It
+lashes from the curl of the tongue already hanging out of his mouth, so it
+seems to shoot out from there.
+
+The symbiote moves the way it does in the films, not like roots spreading:
+a few fat, glossy tendrils with blunt, swollen heads lunge out of a pool of it
+welling from the charm, thrashing as they go, with strings of goo drooping
+between neighbours. It's planned up front, like the bat swarm
+(`Symbiote.swift`): eighteen tendrils fan out of the charm on sweeping curves,
+lunging and pausing, staying thick to the end and only now and then forking —
+under seventy in all — and reach across the screen in about two seconds. A
+frame only decides how far along each to draw, so retreating is the same plan
+wound back.
+
+It never holds still. A wave runs out along each tendril, still at its root
+and throwing its head about most, with the head casting about on top of that,
+and bulges pump outward along it. A fork is carried with the point of the
+tendril it grew from, so it stays on it however both thrash. Each tendril is
+outlined fresh every frame from its centre line and filled, with a highlight
+down one side and a glint on its head. Unlike the other paint-only effects,
+its frame clock keeps running while it holds.
+
+Venom's art is cut out of `Charms/Venom-source.jpg` — him crouched on a
+bridge with his claw raised — by `Tools/VenomCut.swift`, which writes
+`Charms/Venom.png` and `Charms/hd/Venom.png`. Vision's subject mask takes him
+off the sky and the bridge cleanly; the picture is big enough for the largest
+charm as it is, so the two are the same. He hangs from the tip of his raised
+claw, turned so his weight is under it, and the tool prints both for
+`CharmHang`. His back and one leg run off the edge of the picture, so they're
+cut off flat there.
+
 ## Custom charms
 
 The sticker is made with Vision's foreground-instance mask (`Sticker.swift`):
@@ -192,7 +238,10 @@ once its pieces have fallen; and that the Hulk's sheet stays in his fist and
 holds out from it like a mat, not a rag, and swung down slams into the floor
 without going through it, pulling out long or folding over, then flies off as
 thrown; and that a sticker is trimmed to what's opaque and hangs from the top
-of its subject, not down in a notch. No display needed.
+of its subject, not down in a notch; and that the symbiote pours out of the
+charm, crawls without jumping, stays on the screen, keeps its tendrils thick
+rather than branching to fine roots, strings goo only between neighbours, and
+reaches all of the screen in a couple of seconds. No display needed.
 
 ## Layout
 
@@ -216,6 +265,9 @@ Sources/WallSmash.swift manhandled: the screen punched in like concrete
 Sources/Rubble.swift    smashed-concrete geometry — no AppKit, testable headless
 Sources/Shake.swift     tells manhandling from ordinary dragging
 Sources/Sounds.swift    synthesised sound effects
+Sources/Venom.swift     Venom: the tongue grab and the symbiote crawl, overlays
+Sources/Symbiote.swift  the symbiote's crawl plan — no AppKit, testable headless
+Tools/VenomCut.swift    cuts the Venom charm out of its picture
 Sources/CustomCharms.swift  powers, and the user's own charms on disk
 Sources/CharmMaker.swift    the New Custom Charm window
 Sources/Sticker.swift       a picture into a die-cut sticker
@@ -270,6 +322,7 @@ The bat frames in `Effects/` are made from a public-domain silhouette from
 Wikimedia Commons; the Hulk is a CC0 model from OpenGameArt, repainted; the
 concrete is a CC0 texture from Poly Haven. `Effects/CREDITS.md` has the
 sources and licences. The Hulk himself is Marvel's design, so the same
-personal-use caution applies.
+personal-use caution applies. So does it to Venom: Marvel's design, and his
+charm is cut from a picture whose source isn't recorded here.
 
 The code here is mine and carries no such restriction.
