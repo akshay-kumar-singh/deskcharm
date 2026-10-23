@@ -44,6 +44,10 @@
 		<data>
 		24Rc1+Y9yacK6UeZrsPBV+YM94g=
 		</data>
+		<key>Resources/Charms/Venom.png</key>
+		<data>
+		t9oGbSRlvZ63GmQAHk6g1x1Nu0U=
+		</data>
 		<key>Resources/Charms/Wonder-Women.png</key>
 		<data>
 		BFKu5ef4bFl3lMyfi0a8Tak2sO4=
@@ -155,6 +159,13 @@
 			<key>hash2</key>
 			<data>
 			CAIfd/JiNXGiYkMlntHhxz+OISh1cTrMFJ2/nd7hwZU=
+			</data>
+		</dict>
+		<key>Resources/Charms/Venom.png</key>
+		<dict>
+			<key>hash2</key>
+			<data>
+			lAPxhMchl7afRoCMQJ3HrSw5UIAczR+syKtrTOc7Kbw=
 			</data>
 		</dict>
 		<key>Resources/Charms/Wonder-Women.png</key>
