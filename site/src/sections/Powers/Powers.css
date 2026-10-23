@@ -1,0 +1,42 @@
+.powers { background: var(--bg-2); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.tabs { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 48px 0 28px; }
+.tabs button {
+  display: flex; align-items: center; gap: 8px; padding: 6px 16px 6px 6px; border-radius: 999px; border: 0; cursor: pointer;
+  background: var(--card); box-shadow: var(--sh); font-family: var(--display); font-weight: 700; font-size: 15px; letter-spacing: -0.01em;
+  transition: background 0.15s, color 0.15s;
+}
+.tabs button img { width: 34px; height: 34px; object-fit: contain; border-radius: 50%; background: var(--bg-2); padding: 3px; }
+.tabs button[aria-selected="true"] { background: var(--ink); color: #fff; }
+.tabs button[aria-selected="true"] img { background: rgba(255, 255, 255, 0.12); }
+.demo { display: grid; grid-template-columns: 1.35fr 1fr; gap: 36px; align-items: center; }
+.stage .screen { position: absolute; inset: 0; }
+.stage .win { left: 9%; top: 26%; width: 50%; }
+.stage .slot { position: absolute; left: 76%; top: 26px; z-index: 1; }
+.stage .slot .hanger { left: 0; }
+.toast {
+  position: absolute; left: 50%; bottom: 52px; transform: translate(-50%, 10px); z-index: 4;
+  padding: 8px 14px; border-radius: 10px; background: rgba(20, 17, 11, 0.78); color: #fff; font-size: 12.5px; white-space: nowrap;
+  opacity: 0; transition: opacity 0.25s, transform 0.25s; pointer-events: none;
+}
+.toast.on { opacity: 1; transform: translate(-50%, 0); }
+.info h3 { font-size: 40px; }
+.info .sub { color: var(--ink-2); margin: 8px 0 22px; }
+.power { background: var(--card); border-radius: var(--r); padding: 20px 22px; box-shadow: var(--sh); margin-bottom: 14px; }
+.power .head { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+.power .gesture { font-family: var(--display); font-size: 11.5px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); }
+.power h4 { font-family: var(--display); font-size: 21px; font-weight: 800; letter-spacing: -0.02em; margin: 0; }
+.power p { margin: 0; color: var(--ink-2); font-size: 15px; }
+.power .play {
+  margin-left: auto; display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; border: 0; cursor: pointer;
+  background: var(--ink); color: #fff; font-family: var(--display); font-weight: 700; font-size: 13px;
+}
+.power .play:hover { background: #3a3326; }
+.power .play svg { width: 11px; height: 11px; }
+.note { font-size: 13px; color: var(--ink-3); margin: 6px 0 0; }
+
+@media (max-width: 1000px) {
+  .demo { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .power .head { flex-wrap: wrap; }
+}

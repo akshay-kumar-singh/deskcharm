@@ -1,0 +1,20 @@
+.install { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; }
+.install-download { margin-top: 34px; }
+details { border-bottom: 1px solid var(--line); padding: 18px 0; }
+details:first-of-type { border-top: 1px solid var(--line); }
+summary { cursor: pointer; list-style: none; font-family: var(--display); font-weight: 700; font-size: 17px; letter-spacing: -0.01em; display: flex; justify-content: space-between; gap: 16px; }
+summary::-webkit-details-marker { display: none; }
+summary::after { content: "+"; color: var(--gold); font-size: 22px; line-height: 1; transition: transform 0.2s; }
+details[open] summary::after { transform: rotate(45deg); }
+details p { color: var(--ink-2); margin: 10px 0 0; font-size: 15px; }
+
+.term { margin-top: 34px; background: var(--night); color: #fff; border-radius: var(--r); padding: 20px 22px; }
+.term b { font-family: var(--display); font-size: 16px; display: block; }
+.term span { color: rgba(255, 255, 255, 0.65); font-size: 14px; }
+.term .cmd { display: flex; align-items: center; gap: 10px; margin-top: 14px; background: rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 10px 10px 10px 14px; }
+.term code { flex: 1; font: 13px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--gold-light); overflow-x: auto; white-space: nowrap; }
+.term button { flex: none; border: 0; border-radius: 8px; padding: 7px 12px; cursor: pointer; background: var(--gold-light); color: #1d1404; font-family: var(--display); font-weight: 700; font-size: 13px; }
+
+@media (max-width: 1000px) {
+  .install { grid-template-columns: 1fr; }
+}

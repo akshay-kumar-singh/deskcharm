@@ -1,0 +1,12 @@
+.feats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 56px; }
+.feat { background: var(--card); border-radius: var(--r); padding: 28px; box-shadow: var(--sh); }
+.feat .n { font-family: var(--display); font-weight: 800; color: var(--gold); font-size: 14px; letter-spacing: 0.1em; }
+.feat h3 { font-size: 23px; margin: 12px 0 8px; letter-spacing: -0.025em; }
+.feat p { margin: 0; color: var(--ink-2); font-size: 15px; }
+
+@media (max-width: 1000px) {
+  .feats { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 640px) {
+  .feats { grid-template-columns: 1fr; }
+}

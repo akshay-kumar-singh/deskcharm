@@ -1,0 +1,10 @@
+.hanger { position: absolute; left: 50%; top: 0; width: 0; height: 0; transform-origin: 0 0; animation: sway var(--dur, 4s) ease-in-out var(--delay, 0s) infinite alternate; }
+.hanger .thread { position: absolute; left: -1px; top: 0; width: 2px; background: repeating-linear-gradient(180deg, var(--gold-light) 0 3px, var(--gold-deep) 3px 5px); }
+.hanger img { position: absolute; max-width: none; filter: drop-shadow(0 10px 12px rgba(21, 18, 12, 0.28)); }
+@keyframes sway { from { transform: rotate(var(--from, -5deg)); } to { transform: rotate(var(--to, 5deg)); } }
+.hanger.wobble { animation: wobble 0.7s ease-in-out; }
+@keyframes wobble { 0%, 100% { transform: rotate(0); } 15% { transform: rotate(-24deg); } 35% { transform: rotate(22deg); } 55% { transform: rotate(-18deg); } 75% { transform: rotate(12deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .hanger { animation: none; }
+}
