@@ -1,0 +1,10 @@
+# Installed packages and build output of the website (npm install / npm run build)
+node_modules/
+site/dist/
+
+# Secrets: keys and passwords stay on this Mac
+.env
+.env.*
+
+# Finder's per-folder view settings, rewritten whenever a folder is opened
+.DS_Store
