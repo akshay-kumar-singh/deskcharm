@@ -1,6 +1,7 @@
-// Where the download buttons point. Leave as is to serve the .dmg from next
-// to the page (site/deploy.sh puts it there), or set it to a release URL.
-export const DOWNLOAD_URL = "DeskCharm.dmg";
+// Where the download buttons point: the DeskCharm.dmg attached to the latest
+// GitHub release. GitHub serves big files for free; Netlify advises keeping
+// each file in a deploy under 10 MB.
+export const DOWNLOAD_URL = "https://github.com/akshay-kumar-singh/deskcharm/releases/latest/download/DeskCharm.dmg";
 
 export const UPI = {
   id: "akshaysing975@oksbi",

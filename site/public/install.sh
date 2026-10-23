@@ -4,11 +4,11 @@
 #   curl -fsSL https://<site>/install.sh | bash
 #
 # Fetched with curl rather than a browser, the app isn't quarantined, so it
-# opens without macOS's "DeskCharm Not Opened" warning. deploy.sh fills in
-# where the .dmg is; DESKCHARM_DMG overrides it.
+# opens without macOS's "DeskCharm Not Opened" warning. The .dmg comes from
+# the latest GitHub release; DESKCHARM_DMG overrides it.
 set -euo pipefail
 
-URL="${DESKCHARM_DMG:-__DMG_URL__}"
+URL="${DESKCHARM_DMG:-https://github.com/akshay-kumar-singh/deskcharm/releases/latest/download/DeskCharm.dmg}"
 [ "$(uname)" = Darwin ] || { echo "DeskCharm is a Mac app."; exit 1; }
 
 DEST=/Applications
