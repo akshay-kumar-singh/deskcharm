@@ -38,8 +38,7 @@ final class ThorController {
     // MARK: Strike
 
     func strikeWindow() {
-        guard strike == nil, ThorGear.supports(settings.charm),
-              let screen = charm.screen ?? NSScreen.main
+        guard strike == nil, let screen = charm.screen ?? NSScreen.main
         else { return }
         let area = screen.frame
         let target = WebTarget.find(in: area)
@@ -69,8 +68,7 @@ final class ThorController {
     // MARK: Storm
 
     func callStorm() {
-        guard storm == nil, ThorGear.supports(settings.charm),
-              let screen = charm.screen ?? NSScreen.main
+        guard storm == nil, let screen = charm.screen ?? NSScreen.main
         else { return }
         let area = screen.frame
         var rng = SystemRandomNumberGenerator()

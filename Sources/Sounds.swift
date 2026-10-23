@@ -14,6 +14,7 @@ final class SoundFX {
         case thwip, thwipHeavy, splat, whoosh, pop, reel, blast, unweb
         case clank, flutter, flock, zap
         case roar, slam, crash, rubble
+        case lash, slurp, gulp, hiss, ooze
         case thunder, rain, crackle
     }
 
@@ -108,9 +109,71 @@ enum Synth {
         case .slam: return slam(seed: 141)
         case .crash: return crash(seed: 151)
         case .rubble: return rubble(seconds: 1.3, seed: 161)
+        case .lash: return thwip(pitch: 0.42, seed: 171)
+        case .slurp: return slurp(seconds: 0.5, seed: 181)
+        case .gulp: return gulp(seed: 191)
+        case .hiss: return hiss(seed: 201)
+        case .ooze: return ooze(seconds: 1.9, seed: 211)
         case .thunder: return thunder(seed: 171)
         case .rain: return rain(seconds: 5.2, seed: 181)
         case .crackle: return crackle(seconds: 0.95, seed: 191)
+        }
+    }
+
+    /// The tongue reeling a window in: wet, bubbling suction, rising.
+    static func slurp(seconds d: Double, seed: UInt32) -> [Float] {
+        var noise = Noise(seed), suck = SVF(), wet = SVF()
+        return shape(seconds: d, peak: 0.6) { t in
+            let x = noise.next()
+            let bubble = 0.6 + 0.4 * Float(sin(t * 2 * .pi * 26))
+            let s = suck.run(x, cutoff: glide(450, 1900, t, over: d), q: 5).band * bubble
+            let drip = wet.run(abs(x) > 0.993 ? x * 5 : 0, cutoff: 1400, q: 4).band
+            return (s + 0.5 * drip) * Float(sin(.pi * t / d))
+        }
+    }
+
+    /// A window swallowed: a throaty drop in pitch, then a smaller second gulp.
+    static func gulp(seed: UInt32) -> [Float] {
+        var noise = Noise(seed), throat = SVF()
+        var phase = 0.0
+        return shape(seconds: 0.42, peak: 0.8) { t in
+            let second = t >= 0.2
+            let u = second ? t - 0.2 : t
+            phase += 2 * .pi * glide(second ? 160 : 240, second ? 70 : 85, u, over: 0.1) / rate
+            let body = Float(sin(phase) + 0.3 * sin(2 * phase)) * env(u, attack: 0.004, decay: second ? 0.04 : 0.06)
+            let wet = throat.run(noise.next(), cutoff: glide(900, 300, u, over: 0.08), q: 3).band * env(u, attack: 0.002, decay: 0.03)
+            return (body + 0.5 * wet) * (second ? 0.6 : 1)
+        }
+    }
+
+    /// Venom's snarl as the symbiote breaks loose: a long hiss over a low,
+    /// rattling growl.
+    static func hiss(seed: UInt32) -> [Float] {
+        var noise = Noise(seed), air = SVF(), throat = SVF()
+        var phase = 0.0
+        let d = 1.1
+        return shape(seconds: d, peak: 0.7) { t in
+            let x = noise.next()
+            let h = air.run(x, cutoff: glide(5200, 2600, t, over: d), q: 0.8).high
+            phase += 2 * .pi * (62 + 8 * sin(t * 31)) / rate
+            var buzz = 0.0
+            for n in 1...7 { buzz += sin(Double(n) * phase) / Double(n) }
+            let growl = throat.run(Float(tanh(3 * buzz)) * (0.7 + 0.3 * x), cutoff: 600, q: 1.8).band
+            let level = Float(min(1, t / 0.08) * min(1, (d - t) / 0.5))
+            return (0.7 * h + 1.1 * growl) * level
+        }
+    }
+
+    /// The symbiote crawling over the glass: thick, gurgling, squelching goo.
+    static func ooze(seconds d: Double, seed: UInt32) -> [Float] {
+        var noise = Noise(seed), gurgle = SVF(), body = SVF()
+        return shape(seconds: d, peak: 0.5) { t in
+            let x = noise.next()
+            let fc = 320 + 230 * sin(t * 23) * sin(t * 7.3) + 90 * sin(t * 61)
+            let g = gurgle.run(x, cutoff: fc, q: 7).band
+            let rumble = body.run(x, cutoff: 140, q: 0.9).low
+            let level = Float(min(1, t / 0.25) * min(1, (d - t) / 0.6))
+            return (g + 1.4 * rumble) * level
         }
     }
 

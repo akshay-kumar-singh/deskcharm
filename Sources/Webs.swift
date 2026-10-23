@@ -16,6 +16,9 @@ enum WebHands {
     ]
 
     static func supports(_ charm: String) -> Bool { points[charm] != nil }
+
+    /// A custom charm's webs leave from its middle, a little high.
+    static func of(_ charm: String) -> [CGPoint] { points[charm] ?? [CGPoint(x: 0.5, y: 0.42)] }
 }
 
 /// A web strand: a pale core over a dark underlay, so it reads on light and
@@ -93,10 +96,10 @@ final class WebController {
 
     func yank() {
         guard shot == nil,
-              let hands = WebHands.points[settings.charm],
               let screen = charm.screen ?? NSScreen.main
         else { return }
         let area = screen.frame
+        let hands = WebHands.of(settings.charm)
         let target = WebTarget.find(in: area)
         let hand = nearestHand(hands, to: WebTarget.aim(at: target, from: toOverlay(sim.tip, area), in: area), area)
         let k = settings.kickScale
@@ -122,10 +125,10 @@ final class WebController {
 
     func blast() {
         guard spread == nil,
-              let hands = WebHands.points[settings.charm],
               let screen = charm.screen ?? NSScreen.main
         else { return }
         let area = screen.frame
+        let hands = WebHands.of(settings.charm)
         // Lands a little off-centre toward him, like something thrown at the glass.
         let tip = toOverlay(sim.tip, area)
         let centre = CGPoint(x: area.width * 0.5 + (tip.x - area.width * 0.5) * 0.25, y: area.height * 0.45)
