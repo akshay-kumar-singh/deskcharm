@@ -1,0 +1,24 @@
+.download-help { width: min(620px, calc(100% - 32px)); }
+.download-help-body { padding: 44px 44px 30px; }
+.download-help .kicker { margin-bottom: 12px; }
+.download-help h3 { font-size: 36px; padding-right: 36px; }
+.download-help-lede { margin: 14px 0 0; color: var(--ink-2); font-size: 15.5px; }
+.download-help .steps { margin: 24px 0 0; gap: 14px; }
+.download-help .steps li { grid-template-columns: 30px 1fr; gap: 12px; }
+.download-help .steps li::before { width: 30px; height: 30px; font-size: 13px; }
+.download-help .steps b { font-size: 15.5px; }
+.download-help .steps span { display: block; margin-top: 2px; font-size: 14px; line-height: 1.5; }
+/* A macOS button's name, drawn like the button so it's easy to spot. */
+.download-help .steps .mac-btn {
+  display: inline-block; margin: 0 1px; padding: 0 9px; border-radius: 6px;
+  background: var(--card); box-shadow: inset 0 0 0 1px var(--line), 0 1px 2px rgba(21, 18, 12, 0.08);
+  font: 600 13px/1.6 system-ui, -apple-system, sans-serif; color: var(--ink);
+}
+.download-help .term { margin-top: 26px; }
+.download-help-retry { margin: 18px 0 0; text-align: center; font-size: 13px; color: var(--ink-3); }
+.download-help-retry a { color: var(--gold-deep); font-weight: 600; }
+
+@media (max-width: 640px) {
+  .download-help-body { padding: 36px 22px 24px; }
+  .download-help h3 { font-size: 29px; }
+}

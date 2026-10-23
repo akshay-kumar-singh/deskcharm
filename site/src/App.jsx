@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import { DownloadHelpProvider } from "./components/DownloadHelp.jsx";
 import Nav from "./sections/Nav.jsx";
 import Hero from "./sections/Hero/Hero.jsx";
 import Stats from "./sections/Stats.jsx";
@@ -18,7 +19,7 @@ export default function App() {
   const powers = useRef(null);
   if (preview) return <Powers preview={preview} />;
   return (
-    <>
+    <DownloadHelpProvider>
       <Nav />
       <Hero />
       <Stats />
@@ -30,6 +31,6 @@ export default function App() {
       <Support />
       <Cta />
       <Footer />
-    </>
+    </DownloadHelpProvider>
   );
 }

@@ -1,7 +1,7 @@
 import DownloadButton from "../components/DownloadButton.jsx";
 import SectionIntro from "../components/SectionIntro.jsx";
 import Steps from "../components/Steps.jsx";
-import { useCopy } from "../lib/useCopy.js";
+import TerminalInstall from "../components/TerminalInstall.jsx";
 import "./Install.css";
 
 const STEPS = [
@@ -19,11 +19,7 @@ const FAQ = [
   ["How do I quit it?", "✦ in the menu bar → Quit."],
 ];
 
-// The Terminal one-liner, pointing at wherever this page is served from.
-const installCmd = `curl -fsSL ${new URL("install.sh", location.href).href} | bash`;
-
 export default function Install() {
-  const [copied, copy] = useCopy();
   return (
     <section className="block tight-top" id="install">
       <div className="wrap install">
@@ -31,14 +27,7 @@ export default function Install() {
           <SectionIntro kicker="Install." title={<>Up and swinging <em className="s">in a minute.</em></>} />
           <Steps items={STEPS} />
           <div className="install-download"><DownloadButton /></div>
-          <div className="term" id="terminal">
-            <b>Or skip the warning: install from Terminal</b>
-            <span>Paste this into Terminal. It downloads DeskCharm, puts it in Applications and opens it, with no "Not Opened" warning.</span>
-            <div className="cmd">
-              <code>{installCmd}</code>
-              <button type="button" onClick={() => copy(installCmd)}>{copied ? "Copied" : "Copy"}</button>
-            </div>
-          </div>
+          <TerminalInstall id="terminal" />
         </div>
         <div>
           <p className="kicker">Good questions.</p>
