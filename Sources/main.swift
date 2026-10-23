@@ -103,7 +103,10 @@ struct CharmHang {
         "Spider-Man-Swinging": CharmHang(attach: CGPoint(x: 0.012, y: 0.003), tilt: 0.46),
         // From the tip of his raised claw, turned so his weight hangs under
         // it (both from Tools/VenomCut.swift).
-        "Venom": CharmHang(attach: CGPoint(x: 0.169, y: 0.002), tilt: 0.393)
+        "Venom": CharmHang(attach: CGPoint(x: 0.169, y: 0.002), tilt: 0.393),
+        // From the top of the rope he hangs on, turned so his weight sits
+        // nearly under it and the rope runs up the chain.
+        "Thor": CharmHang(attach: CGPoint(x: 0.097, y: 0), tilt: -0.25)
     ]
 
     static func of(_ charm: String) -> CharmHang {
@@ -327,6 +330,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var bats: BatController!
     private var hulk: HulkController!
     private var venom: VenomController!
+    private var thor: ThorController!
 
     private let winW: CGFloat = 560
     private let winH: CGFloat = 820
@@ -354,6 +358,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         bats = BatController(charm: window, sim: sim, settings: settings)
         hulk = HulkController(charm: window, sim: sim, settings: settings)
         venom = VenomController(charm: window, sim: sim, settings: settings)
+        thor = ThorController(charm: window, sim: sim, settings: settings)
         SoundFX.shared.enabled = settings.sounds
         window.contentView = NSHostingView(rootView: CharmView(
             settings: settings, sim: sim,
@@ -390,6 +395,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case .batman: bats.towWindow()
         case .hulk: hulk.smashWindow()
         case .venom: venom.lashWindow()
+        case .thor: thor.strikeWindow()
         case nil: break
         }
     }
@@ -400,6 +406,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         case .batman: bats.releaseBats()
         case .hulk: hulk.smashScreen()
         case .venom: venom.unleashSymbiote()
+        case .thor: thor.callStorm()
         case nil: break
         }
     }
@@ -495,7 +502,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if settings.hasGadgets && !WindowSnapshot.allowed {
             let snap = NSMenuItem(title: "Allow Window Snapshots…", action: #selector(allowSnapshots), keyEquivalent: "")
             snap.target = self
-            snap.toolTip = "Lets the web, the grapple, the Hulk or Venom's tongue take the real window instead of a card. Needs Screen Recording; takes effect after a relaunch."
+            snap.toolTip = "Lets the web, the grapple, the Hulk, Venom's tongue or Thor's lightning take the real window instead of a card. Needs Screen Recording; takes effect after a relaunch."
             menu.addItem(snap)
         }
         if settings.hasGadgets {

@@ -15,6 +15,7 @@ final class SoundFX {
         case clank, flutter, flock, zap
         case roar, slam, crash, rubble
         case lash, slurp, gulp, hiss, ooze
+        case thunder, rain, crackle
     }
 
     static let shared = SoundFX()
@@ -47,8 +48,9 @@ final class SoundFX {
             samples.withUnsafeBufferPointer { channel.update(from: $0.baseAddress!, count: samples.count) }
             buffers[effect] = buffer
         }
-        // Enough voices that a yank's cues and a blast's can overlap.
-        for _ in 0..<4 {
+        // Enough voices that a yank's cues and a blast's can overlap, and a
+        // storm's rain can run under its thunder.
+        for _ in 0..<6 {
             let voice = AVAudioPlayerNode()
             engine.attach(voice)
             engine.connect(voice, to: engine.mainMixerNode, format: format)
@@ -112,6 +114,9 @@ enum Synth {
         case .gulp: return gulp(seed: 191)
         case .hiss: return hiss(seed: 201)
         case .ooze: return ooze(seconds: 1.9, seed: 211)
+        case .thunder: return thunder(seed: 171)
+        case .rain: return rain(seconds: 5.2, seed: 181)
+        case .crackle: return crackle(seconds: 0.95, seed: 191)
         }
     }
 
@@ -366,6 +371,68 @@ enum Synth {
             phase += 2 * .pi * glide(95, 38, t, over: 0.25) / rate
             let thump = Float(sin(phase)) * env(t, attack: 0.002, decay: 0.16)
             return mush + 0.6 * crackle + 0.25 * hiss + 1.1 * thump
+        }
+    }
+
+    /// Thunder: a sharp crack of high noise, a deep boom, then a long rumble
+    /// rolling on as the sound comes back off the clouds, in swells that
+    /// each die a little lower than the last.
+    static func thunder(seed: UInt32) -> [Float] {
+        var noise = Noise(seed), crack = SVF(), roll = SVF(), deep = SVF()
+        var boom = 0.0
+        let d = 3.4
+        var swells: [(at: Double, level: Float)] = []
+        for k in 0..<7 {
+            let jitter = 0.15 * Double(abs(noise.next()))
+            swells.append((at: 0.08 + 0.4 * Double(k) + jitter, level: Float(0.9 - 0.11 * Double(k))))
+        }
+        return shape(seconds: d, peak: 0.9) { t in
+            let x = noise.next()
+            let snap = crack.run(x, cutoff: glide(6500, 900, t, over: 0.12), q: 0.8).high * env(t, attack: 0.0005, decay: 0.035)
+            boom += 2 * .pi * glide(78, 34, t, over: 0.35) / rate
+            var rumble: Float = 0
+            for s in swells where t >= s.at { rumble += s.level * env(t - s.at, attack: 0.09, decay: 0.34) }
+            let body = roll.run(x, cutoff: glide(520, 130, t, over: d), q: 0.7).low
+            let sub = deep.run(x, cutoff: 70, q: 0.8).low
+            let tail = Float(min(1, (d - t) / 0.8))
+            return (0.7 * snap + 1.2 * Float(sin(boom)) * env(t, attack: 0.002, decay: 0.3)
+                    + (2.4 * body + 4 * sub) * rumble) * tail
+        }
+    }
+
+    /// Steady rain: a wide hiss of noise with a softer patter in the mids,
+    /// swelling in as the sky closes and out as it clears.
+    static func rain(seconds d: Double, seed: UInt32) -> [Float] {
+        var noise = Noise(seed), hiss = SVF(), patter = SVF()
+        return shape(seconds: d, peak: 0.4) { t in
+            let x = noise.next()
+            let spray = hiss.run(x, cutoff: 5200, q: 0.6).high
+            let drops = patter.run(abs(x) > 0.93 ? x * 3 : 0, cutoff: 2400, q: 1.2).band
+            let swell = Float(min(1, t / 0.7) * min(1, (d - t) / 1.2))
+            return (0.8 * spray + 0.9 * drops) * swell
+        }
+    }
+
+    /// Electricity arcing: sharp random snaps of high noise, thick and
+    /// quick, over a thin buzz, swelling in as the charge builds.
+    static func crackle(seconds d: Double, seed: UInt32) -> [Float] {
+        var noise = Noise(seed), snap = SVF(), buzz = SVF()
+        var next = 0.0, from = -1.0, level: Float = 0
+        return shape(seconds: d, peak: 0.6) { t in
+            let x = noise.next()
+            if t >= next {
+                from = t
+                level = 0.4 + 0.6 * abs(noise.next())
+                next = t + 0.008 + 0.045 * Double(abs(noise.next()))
+            }
+            let bright: Float = snap.run(x, cutoff: 4200, q: 0.7).high
+            let spark: Float = bright * env(t - from, attack: 0.0004, decay: 0.006) * level
+            let hum: Float = buzz.run(x, cutoff: 1700, q: 3).band * 0.12
+            let rise: Double = min(1, 0.35 + t / 0.3)
+            let fall: Double = min(1, (d - t) / 0.2)
+            let swell = Float(rise * fall)
+            let mix: Float = 2 * spark + hum
+            return mix * swell
         }
     }
 

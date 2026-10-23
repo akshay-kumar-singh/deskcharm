@@ -9,7 +9,7 @@ import UniformTypeIdentifiers
 // charm can take any hero's double-click and any hero's shake.
 
 enum Power: String, Codable, CaseIterable {
-    case spiderMan, batman, hulk, venom
+    case spiderMan, batman, hulk, venom, thor
 
     var doubleClickTitle: String {
         switch self {
@@ -17,6 +17,7 @@ enum Power: String, Codable, CaseIterable {
         case .batman: "Batman: grapple tow"
         case .hulk: "Hulk: window smash"
         case .venom: "Venom: tongue grab"
+        case .thor: "Thor: lightning strike"
         }
     }
 
@@ -26,6 +27,7 @@ enum Power: String, Codable, CaseIterable {
         case .batman: "Batman: bat swarm"
         case .hulk: "Hulk: wall smash"
         case .venom: "Venom: symbiote crawl"
+        case .thor: "Thor: thunderstorm"
         }
     }
 }
@@ -43,7 +45,8 @@ struct CharmPowers {
         let own: Power? = WebHands.supports(charm) ? .spiderMan
             : BatGear.supports(charm) ? .batman
             : HulkGear.supports(charm) ? .hulk
-            : VenomGear.supports(charm) ? .venom : nil
+            : VenomGear.supports(charm) ? .venom
+            : ThorGear.supports(charm) ? .thor : nil
         return CharmPowers(doubleClick: own, shake: own)
     }
 }
