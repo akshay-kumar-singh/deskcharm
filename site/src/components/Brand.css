@@ -1,0 +1,2 @@
+.brand { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-weight: 800; font-size: 19px; letter-spacing: -0.03em; text-decoration: none; }
+.brand img { width: 30px; height: 30px; }

@@ -1,0 +1,75 @@
+/* Tokens and the styles every section shares. Each component's own styles
+   sit next to it. */
+:root {
+  --bg: #fbf8f1;
+  --bg-2: #f4efe3;
+  --card: #ffffff;
+  --ink: #15120c;
+  --ink-2: #625b4d;
+  --ink-3: #8c8475;
+  --line: #ebe4d4;
+  --gold: #b79042;
+  --gold-light: #e2c264;
+  --gold-deep: #8a6a12;
+  --night: #14110b;
+  --r: 22px;
+  --sh: 0 1px 1px rgba(21, 18, 12, 0.04), 0 8px 24px -8px rgba(21, 18, 12, 0.12);
+  --sh-float: 0 30px 70px -20px rgba(21, 18, 12, 0.35), 0 10px 24px -8px rgba(21, 18, 12, 0.18);
+  --display: "Inter Tight", Inter, system-ui, sans-serif;
+  --serif: Newsreader, "New York", Georgia, serif;
+  --wall: linear-gradient(155deg, #4f5f9c 0%, #7c72b0 38%, #c98e9b 72%, #f0b78f 100%);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 16px/1.6 Inter, system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+img { max-width: 100%; }
+a { color: inherit; }
+button { font: inherit; color: inherit; }
+.wrap { max-width: 1200px; margin: 0 auto; padding: 0 24px; }
+
+/* ---------- type ---------- */
+h1, h2, h3 { font-family: var(--display); font-weight: 800; letter-spacing: -0.035em; margin: 0; line-height: 1.02; }
+em.s { font-family: var(--serif); font-style: italic; font-weight: 500; letter-spacing: -0.02em; color: var(--gold-deep); }
+.kicker { font-family: var(--display); font-size: 12.5px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); margin: 0 0 16px; }
+.kicker::before { content: "✦ "; }
+h2 { font-size: clamp(36px, 5.4vw, 60px); }
+.rule { width: 44px; height: 2px; background: var(--gold); margin: 22px 0; border: 0; }
+.lede { color: var(--ink-2); font-size: 18px; max-width: 580px; margin: 0; }
+.center { text-align: center; }
+.center .rule, .center .lede { margin-left: auto; margin-right: auto; }
+kbd { font: 12.5px ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 1px 6px; }
+
+/* ---------- buttons ---------- */
+.btn {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 15px 26px; border-radius: 999px; border: 0; cursor: pointer;
+  font-family: var(--display); font-weight: 700; font-size: 16px; letter-spacing: -0.01em;
+  text-decoration: none; transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+.btn svg { width: 18px; height: 18px; flex: none; }
+.btn-dark { background: var(--ink); color: #fff; box-shadow: 0 10px 24px -10px rgba(21, 18, 12, 0.6); }
+.btn-dark:hover { transform: translateY(-2px); box-shadow: 0 16px 30px -12px rgba(21, 18, 12, 0.7); }
+.btn-ghost { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--line); }
+.btn-ghost:hover { box-shadow: inset 0 0 0 1.5px var(--gold); }
+.btn-gold { background: linear-gradient(180deg, #ffe9a8, var(--gold-light) 45%, var(--gold)); color: #1d1404; box-shadow: 0 12px 30px -10px rgba(226, 194, 100, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.7); }
+.btn-gold:hover { transform: translateY(-2px); }
+.meta { font-size: 13.5px; color: var(--ink-3); margin-top: 14px; }
+
+/* ---------- sections ---------- */
+section.block { padding: 110px 0; }
+section.block.tight-top { padding-top: 20px; }
+
+@media (max-width: 640px) {
+  .wrap { padding: 0 16px; }
+  section.block { padding: 80px 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}

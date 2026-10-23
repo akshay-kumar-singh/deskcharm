@@ -1,0 +1,12 @@
+.stats { padding: 30px 0 10px; }
+.stats .wrap { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.stat { padding: 26px 20px; text-align: center; }
+.stat + .stat { border-left: 1px solid var(--line); }
+.stat b { display: block; font-family: var(--display); font-size: 34px; font-weight: 800; letter-spacing: -0.04em; line-height: 1.1; }
+.stat span { font-size: 13.5px; color: var(--ink-2); }
+
+@media (max-width: 640px) {
+  .stats .wrap { grid-template-columns: 1fr 1fr; }
+  .stat:nth-child(3) { border-left: 0; }
+  .stat:nth-child(n + 3) { border-top: 1px solid var(--line); }
+}

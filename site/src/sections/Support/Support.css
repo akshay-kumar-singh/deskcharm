@@ -1,0 +1,36 @@
+.support { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 64px; align-items: center; background: var(--card); border-radius: 32px; padding: 56px; box-shadow: var(--sh); }
+.support-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 18px; margin-top: 34px; }
+.support-note { font-size: 13.5px; color: var(--ink-3); }
+
+.btn-coffee { padding: 16px 28px; font-size: 17px; }
+.btn-coffee svg { width: 22px; height: 22px; color: var(--gold-light); }
+.btn-coffee .steam { transform-box: fill-box; transform-origin: bottom; }
+.btn-coffee:hover .steam { animation: steam 1.4s ease-in-out infinite; }
+@keyframes steam { 50% { opacity: 0.3; transform: translateY(-1.5px) scaleY(1.15); } }
+
+/* A café menu card standing in for prices: every item is pay what you like. */
+.menu-card { position: relative; justify-self: center; width: min(100%, 380px); padding: 34px 32px 26px; border-radius: 22px; background: #fffdf7; box-shadow: var(--sh-float); transform: rotate(2deg); }
+.menu-card::before { content: "☕"; position: absolute; left: -22px; top: 22px; z-index: 1; font-size: 44px; transform: rotate(-14deg); filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.18)); }
+.menu-card::after { content: ""; position: absolute; inset: 10px; border: 1.5px dashed var(--line); border-radius: 15px; pointer-events: none; }
+.menu-title { margin: 0; text-align: center; font-family: var(--serif); font-style: italic; font-weight: 500; font-size: 28px; letter-spacing: -0.02em; line-height: 1.1; }
+.menu-sub { margin: 6px 0 22px; text-align: center; font-family: var(--display); font-size: 11.5px; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); }
+.menu-card ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 16px; }
+.menu-card li { display: grid; grid-template-columns: 40px 1fr; gap: 12px; align-items: start; }
+.menu-icon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--bg-2); font-size: 20px; }
+.menu-line { display: flex; align-items: baseline; gap: 8px; }
+.menu-line b { font-family: var(--display); font-size: 16.5px; letter-spacing: -0.01em; white-space: nowrap; }
+.menu-line .dots { flex: 1; min-width: 12px; border-bottom: 2px dotted #d9cfb8; transform: translateY(-4px); }
+.menu-line em { font-style: normal; font-size: 12.5px; font-weight: 600; color: var(--gold-deep); white-space: nowrap; }
+.menu-card li p { margin: 2px 0 0; font-size: 14px; color: var(--ink-2); line-height: 1.45; }
+.menu-foot { margin: 22px 0 0; padding-top: 14px; border-top: 1.5px dashed var(--line); text-align: center; font-size: 12.5px; color: var(--ink-3); }
+
+@media (max-width: 1000px) {
+  .support { grid-template-columns: 1fr; padding: 40px 28px; gap: 48px; }
+}
+@media (max-width: 640px) {
+  .menu-card { padding: 30px 22px 22px; transform: rotate(1deg); }
+  .menu-card::before { left: -10px; top: -18px; font-size: 38px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn-coffee:hover .steam { animation: none; }
+}

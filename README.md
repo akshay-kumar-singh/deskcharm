@@ -12,6 +12,21 @@ open DeskCharm.app  # run
 
 It lives in the menu bar as `✦` — no Dock icon, no window chrome.
 
+## Website
+
+The download page is a React app in `site/` (Vite).
+
+```bash
+cd site && npm install
+npm run dev         # http://localhost:5173
+npm run build       # → site/dist
+```
+
+Netlify builds and deploys it on every push to `main` (`netlify.toml`). The
+.dmg isn't part of the site: `./package.sh` makes it, and it's attached to a
+GitHub release as `DeskCharm.dmg`, which the download buttons and
+`install.sh` fetch from the latest release.
+
 ## Use
 
 - **Drag the charm** to swing it. Let go and it carries momentum, then settles.

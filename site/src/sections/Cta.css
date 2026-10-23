@@ -1,0 +1,13 @@
+.cta { position: relative; background: var(--night); color: #fff; border-radius: 32px; margin: 0 24px; padding: 290px 24px 90px; overflow: hidden; text-align: center; }
+.cta .row { position: absolute; inset: 0 0 auto; height: 260px; }
+.cta .row .hanger { left: var(--x); }
+.cta h2 { color: #fff; }
+.cta em.s { color: var(--gold-light); }
+.cta .rule { margin: 22px auto; }
+.cta .lede { color: rgba(255, 255, 255, 0.7); margin: 0 auto 34px; }
+.cta .meta { color: rgba(255, 255, 255, 0.5); }
+
+@media (max-width: 640px) {
+  .cta { margin: 0 12px; padding-top: 240px; }
+  .cta .row { height: 220px; }
+}

@@ -1,0 +1,61 @@
+.coffee[open] { display: grid; grid-template-columns: 0.95fr 1.05fr; }
+
+/* ---------- the code, in a viewfinder ---------- */
+.coffee-scan {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  padding: 44px 36px 34px; text-align: center; color: #fff;
+  background: radial-gradient(120% 70% at 50% 0%, #3a2e16 0%, var(--night) 72%);
+}
+.scanner { position: relative; width: min(100%, 270px); aspect-ratio: 1; padding: 18px; margin-bottom: 18px; }
+.scanner img { display: block; width: 100%; height: 100%; padding: 8px; border-radius: 14px; background: #fff; box-shadow: 0 22px 44px -18px rgba(0, 0, 0, 0.7); }
+/* Gold corner marks: a rounded border masked down to its four corners. */
+.scanner::before {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  --l: 42px;
+  border: 3px solid var(--gold-light); border-radius: 24px;
+  -webkit-mask: conic-gradient(at var(--l) var(--l), #0000 75%, #000 0) 0 0 / calc(100% - var(--l)) calc(100% - var(--l));
+  mask: conic-gradient(at var(--l) var(--l), #0000 75%, #000 0) 0 0 / calc(100% - var(--l)) calc(100% - var(--l));
+}
+.scan-line {
+  position: absolute; left: 24px; right: 24px; top: 26px; height: 2px; border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold-light) 20%, #fff3c4 50%, var(--gold-light) 80%, transparent);
+  box-shadow: 0 0 14px 3px rgba(226, 194, 100, 0.5);
+  animation: scan 2.4s ease-in-out infinite alternate;
+}
+@keyframes scan { to { top: calc(100% - 28px); } }
+.scan-caption { margin: 0; font-family: var(--display); font-weight: 700; font-size: 16px; letter-spacing: -0.01em; }
+.scan-apps { margin: 0; font-size: 12.5px; color: rgba(255, 255, 255, 0.55); }
+
+/* ---------- the ways to pay ---------- */
+.coffee-info { padding: 46px 42px 36px; }
+.coffee-info .kicker { margin-bottom: 12px; }
+.coffee-info h3 { font-size: 36px; }
+.coffee-lede { margin: 14px 0 0; color: var(--ink-2); font-size: 15.5px; }
+.coffee .steps { margin: 22px 0 0; gap: 12px; }
+.coffee .steps li { grid-template-columns: 30px 1fr; gap: 12px; }
+.coffee .steps li::before { width: 30px; height: 30px; font-size: 13px; }
+.coffee .steps b { font-size: 15px; }
+.coffee .steps span { display: block; margin-top: 2px; font-size: 13.5px; line-height: 1.45; }
+.coffee-label { margin: 24px 0 8px; font-family: var(--display); font-size: 11.5px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-3); }
+.upi-id {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 8px 8px 8px 16px; border-radius: 14px; background: var(--bg); box-shadow: inset 0 0 0 1px var(--line);
+  font: 14.5px ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+.upi-id span { overflow: hidden; text-overflow: ellipsis; }
+.upi-id button { flex: none; border: 0; border-radius: 9px; padding: 8px 14px; cursor: pointer; background: var(--ink); color: #fff; font-family: var(--display); font-weight: 700; font-size: 13px; }
+/* Paying straight from a UPI app only makes sense on a phone. */
+.upi-pay { display: none; width: 100%; justify-content: center; margin-top: 12px; }
+@media (hover: none) and (pointer: coarse) { .upi-pay { display: flex; } }
+.coffee-fine { margin: 18px 0 0; font-size: 12.5px; line-height: 1.5; color: var(--ink-3); }
+
+@media (max-width: 720px) {
+  .coffee[open] { grid-template-columns: 1fr; }
+  .coffee-scan { padding: 40px 24px 26px; }
+  .scanner { width: min(100%, 240px); }
+  .coffee-info { padding: 28px 24px 26px; }
+  .coffee-info h3 { font-size: 30px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scan-line { display: none; }
+}

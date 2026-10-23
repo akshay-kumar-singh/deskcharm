@@ -1,0 +1,7 @@
+# Netlify builds the download site from site/ on every push to main. The
+# .dmg isn't part of the site: it's attached to the latest GitHub release,
+# which the download buttons and install.sh link to (site/src/config.js).
+[build]
+  base = "site"
+  command = "npm run build"
+  publish = "dist"
