@@ -8,7 +8,8 @@ const LINKS = [
   ["#cast", "Charms"],
   ["#make", "Make your own"],
   ["#install", "Install"],
-  ["#support", "Buy me a coffee"],
+  // ["#support", "Buy me a coffee"], (switched off with its section in App.jsx)
+  ["#github", "Star on GitHub"],
 ];
 
 export default function Nav() {

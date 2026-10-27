@@ -8,7 +8,10 @@ import Cast from "./sections/Cast.jsx";
 import MakeYourOwn from "./sections/MakeYourOwn.jsx";
 import Features from "./sections/Features.jsx";
 import Install from "./sections/Install.jsx";
-import Support from "./sections/Support/Support.jsx";
+// Buy me a coffee is switched off for now. To bring it back, uncomment this
+// import and <Support /> below, and its link in sections/Nav.jsx.
+// import Support from "./sections/Support/Support.jsx";
+import GitHubStar from "./sections/GitHubStar.jsx";
 import Cta from "./sections/Cta.jsx";
 import Footer from "./sections/Footer.jsx";
 
@@ -28,7 +31,8 @@ export default function App() {
       <MakeYourOwn />
       <Features />
       <Install />
-      <Support />
+      {/* <Support /> */}
+      <GitHubStar />
       <Cta />
       <Footer />
     </DownloadHelpProvider>
