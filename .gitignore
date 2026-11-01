@@ -7,6 +7,11 @@ build/
 node_modules/
 site/dist/
 
+# The Windows app's built pages and installer (npm run build / npm run dist in windows/).
+# The installer is shared through DeskCharm-Setup.exe on GitHub Releases instead.
+windows/dist/
+windows/release/
+
 # Secrets: keys and passwords stay on this Mac
 .env
 .env.*

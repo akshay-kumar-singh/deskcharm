@@ -27,6 +27,21 @@ Netlify builds and deploys it on every push to `main` (`netlify.toml`). The
 GitHub release as `DeskCharm.dmg`, which the download buttons and
 `install.sh` fetch from the latest release.
 
+## Windows
+
+The Windows version is an Electron app in `windows/`, with the same charms and
+powers. It lives in the system tray.
+
+```bash
+cd windows && npm install
+npm start           # run it from source
+npm test            # the physics and simulations
+npm run dist        # → windows/release/DeskCharm-Setup.exe (this works on a Mac too)
+```
+
+The installer is attached to the same GitHub release as `DeskCharm-Setup.exe`,
+which the site's Windows button and `install.ps1` fetch from the latest release.
+
 ## Use
 
 - **Drag the charm** to swing it. Let go and it carries momentum, then settles.

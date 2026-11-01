@@ -1,0 +1,60 @@
+{
+  "name": "deskcharm",
+  "productName": "DeskCharm",
+  "version": "1.0.0",
+  "description": "Superhero charms that hang off the top of your screen on a gold chain, swing with real physics, and have superpowers.",
+  "author": "Akshay Kumar Singh",
+  "private": true,
+  "main": "src/main/main.js",
+  "scripts": {
+    "build": "vite build",
+    "start": "vite build && electron .",
+    "test": "node --test test/*.test.mjs",
+    "dist": "node scripts/dist.mjs"
+  },
+  "dependencies": {
+    "koffi": "^3.3.6"
+  },
+  "devDependencies": {
+    "electron": "^45.2.1",
+    "electron-builder": "^26.18.0",
+    "three": "^0.187.0",
+    "vite": "^8.3.5"
+  },
+  "type": "module",
+  "build": {
+    "appId": "local.deskcharm",
+    "productName": "DeskCharm",
+    "copyright": "© 2026 Akshay Kumar Singh",
+    "directories": {
+      "output": "release"
+    },
+    "npmRebuild": false,
+    "electronLanguages": ["en-US"],
+    "files": [
+      "package.json",
+      "dist/renderer/**",
+      "src/main/**",
+      "src/preload/**",
+      "src/shared/**",
+      "assets/**",
+      "!**/node_modules/@koromix/koffi-{darwin,linux,freebsd,openbsd}-*/**"
+    ],
+    "extraResources": [
+      { "from": "../Charms/hd", "to": "Charms", "filter": ["*.png"] },
+      { "from": "../Effects", "to": "Effects", "filter": ["Bat-*.png", "Concrete.jpg", "HulkModel.glb", "HulkSkin.png", "CREDITS.md"] }
+    ],
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "runAfterFinish": true,
+      "shortcutName": "DeskCharm",
+      "artifactName": "DeskCharm-Setup.exe",
+      "include": "installer.nsh"
+    }
+  }
+}

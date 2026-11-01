@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'">
+<title>New Custom Charm</title>
+<style>
+  :root {
+    --bg: #fbf8f1; --card: #ffffff; --ink: #15120c; --ink-2: #625b4d; --ink-3: #8c8475; --line: #ebe4d4;
+    --gold: #b79042; --gold-deep: #8a6a12;
+    font: 14px/1.5 "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+    color: var(--ink);
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 22px 24px 20px; background: var(--bg); user-select: none; }
+  h1 { margin: 0 0 4px; font-size: 20px; font-weight: 700; letter-spacing: -0.01em; }
+  .sub { margin: 0 0 16px; color: var(--ink-2); }
+  .drop {
+    position: relative; height: 260px; border-radius: 14px; background: var(--card);
+    border: 1.5px dashed #d8cdb6; display: grid; place-items: center; overflow: hidden; cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .drop.over { border-color: var(--gold); background: #fffaf0; }
+  .drop .hint { text-align: center; color: var(--ink-3); }
+  .drop .hint b { display: block; font-size: 30px; line-height: 1; margin-bottom: 8px; color: var(--gold); }
+  .drop canvas { max-width: calc(100% - 48px); max-height: calc(100% - 48px); filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.28)); }
+  .drop.working canvas { opacity: 0.4; }
+  .spinner { position: absolute; width: 28px; height: 28px; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--gold); animation: spin 0.8s linear infinite; display: none; }
+  .drop.working .spinner { display: block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .note { margin: 10px 0 0; color: var(--ink-3); font-size: 12.5px; min-height: 19px; }
+  .note.error { color: #a1301e; }
+  .tip { margin: 6px 0 14px; padding: 9px 12px; border-radius: 10px; background: #f4efe3; color: var(--ink-2); font-size: 12.5px; }
+  label { display: grid; grid-template-columns: 116px 1fr; align-items: center; gap: 10px; margin: 9px 0; }
+  input[type=text], select {
+    width: 100%; padding: 7px 10px; border-radius: 8px; border: 1px solid #d8cdb6; background: var(--card);
+    font: inherit; color: inherit;
+  }
+  input[type=text]:focus, select:focus { outline: 2px solid rgba(183, 144, 66, 0.4); border-color: var(--gold); }
+  .buttons { display: flex; gap: 10px; justify-content: flex-end; margin-top: 18px; }
+  button {
+    font: inherit; font-weight: 600; padding: 8px 16px; border-radius: 999px; border: 1px solid #d8cdb6;
+    background: var(--card); color: var(--ink); cursor: pointer;
+  }
+  button.primary { background: var(--ink); border-color: var(--ink); color: #fff; }
+  button:disabled { opacity: 0.45; cursor: default; }
+</style>
+</head>
+<body>
+<h1>Make your own charm</h1>
+<p class="sub">Pick a picture and DeskCharm turns it into a sticker charm with a white die-cut border.</p>
+<div class="drop" id="drop" tabindex="0">
+  <div class="hint" id="hint"><b>✦</b>Drop a picture here, or click to choose one</div>
+  <div class="spinner"></div>
+</div>
+<input type="file" id="file" accept="image/*" hidden>
+<p class="note" id="note"></p>
+<p class="tip">Tip: a PNG with a transparent background keeps its shape. To cut a photo's subject out first, open it in Paint (Windows 11), choose <b>Remove background</b>, and save it as a PNG.</p>
+<label>Name <input type="text" id="name" maxlength="40" placeholder="My Charm"></label>
+<label>On double-click <select id="doubleClick"></select></label>
+<label>On shake <select id="shake"></select></label>
+<div class="buttons">
+  <button type="button" id="cancel">Cancel</button>
+  <button type="button" class="primary" id="add" disabled>Add Charm</button>
+</div>
+<script type="module" src="./maker/maker.js"></script>
+</body>
+</html>
