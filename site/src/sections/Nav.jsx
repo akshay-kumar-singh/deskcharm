@@ -10,7 +10,6 @@ const LINKS = [
   ["#install", "Install"],
   // ["#support", "Buy me a coffee"], (switched off with its section in App.jsx)
   ["#github", "Star on GitHub"],
-  ["#maker", "Portfolio"],
 ];
 
 export default function Nav() {
@@ -25,6 +24,12 @@ export default function Nav() {
     <nav className={scrolled ? "scrolled" : undefined}>
       <div className="wrap">
         <Brand />
+        {/* The maker's signature, so the menu stays about the app: "DeskCharm by Akshay".
+            It scrolls to the Made by Akshay section, which links to the portfolio. */}
+        <a className="nav-maker" href="#maker">
+          <span className="nav-maker-mono" aria-hidden="true">AK</span>
+          by Akshay
+        </a>
         <div className="links">
           {LINKS.map(([href, label]) => <a key={href} href={href}>{label}</a>)}
         </div>
