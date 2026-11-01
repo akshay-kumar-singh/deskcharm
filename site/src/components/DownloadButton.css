@@ -1,0 +1,9 @@
+/* Both downloads side by side, each with what it needs beneath it. */
+.downloads { display: flex; flex-wrap: wrap; gap: 16px 12px; }
+.downloads > div { display: grid; justify-items: center; gap: 8px; }
+.downloads span { font-size: 12.5px; color: var(--ink-3); }
+
+@media (max-width: 640px) {
+  .downloads > div { flex: 1 1 100%; }
+  .downloads .btn { width: 100%; justify-content: center; }
+}

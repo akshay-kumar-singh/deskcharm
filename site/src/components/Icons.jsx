@@ -45,6 +45,15 @@ export function CloseIcon() {
   );
 }
 
+// Up and to the right: the link opens somewhere else.
+export function ExternalIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M7 17 17 7M9 7h8v8" />
+    </svg>
+  );
+}
+
 export function ArrowIcon() {
   return (
     <svg viewBox="0 0 44 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

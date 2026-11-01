@@ -1,6 +1,10 @@
 export const GITHUB_REPO = "akshay-kumar-singh/deskcharm";
 export const GITHUB_URL = `https://github.com/${GITHUB_REPO}`;
 
+// The maker's portfolio: work, the studio's AI automations and product
+// videos, and a way to get in touch.
+export const PORTFOLIO_URL = "https://portfolio-next-js-blond.vercel.app/";
+
 // Where the download buttons point: the files attached to the latest GitHub
 // release, DeskCharm.dmg and DeskCharm-Setup.exe. GitHub serves big files for
 // free; Netlify advises keeping each file in a deploy under 10 MB.

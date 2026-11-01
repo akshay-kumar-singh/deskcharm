@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useState } from "react";
-import { DOWNLOADS } from "../config.js";
+import { DOWNLOADS, PORTFOLIO_URL } from "../config.js";
 import Modal from "./Modal.jsx";
 import Steps from "./Steps.jsx";
 import TerminalInstall from "./TerminalInstall.jsx";
@@ -53,6 +53,7 @@ export function DownloadHelpProvider({ children }) {
           <Steps items={help.steps} />
           <p className="download-help-tip">{help.tip}</p>
           <p className="download-help-retry">Download didn't start? <a href={download.url}>Download again</a></p>
+          <p className="download-help-maker">Made by Akshay Kumar Singh · <a href={PORTFOLIO_URL} target="_blank" rel="noopener noreferrer">See more of my work</a></p>
         </div>
       </Modal>
     </ShowHelp>

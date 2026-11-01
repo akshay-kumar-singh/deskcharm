@@ -10,6 +10,7 @@ const LINKS = [
   ["#install", "Install"],
   // ["#support", "Buy me a coffee"], (switched off with its section in App.jsx)
   ["#github", "Star on GitHub"],
+  ["#maker", "Portfolio"],
 ];
 
 export default function Nav() {

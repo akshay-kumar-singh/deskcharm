@@ -12,6 +12,7 @@ import Install from "./sections/Install.jsx";
 // import and <Support /> below, and its link in sections/Nav.jsx.
 // import Support from "./sections/Support/Support.jsx";
 import GitHubStar from "./sections/GitHubStar.jsx";
+import Maker from "./sections/Maker.jsx";
 import Cta from "./sections/Cta.jsx";
 import Footer from "./sections/Footer.jsx";
 
@@ -33,6 +34,7 @@ export default function App() {
       <Install />
       {/* <Support /> */}
       <GitHubStar />
+      <Maker />
       <Cta />
       <Footer />
     </DownloadHelpProvider>

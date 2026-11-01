@@ -32,7 +32,7 @@ export default function GitHubStar() {
             <SectionIntro
               kicker="Like it? Star it."
               title={<>Enjoying DeskCharm? <em className="s">Give it a star.</em></>}
-              lede="DeskCharm is free, and its code is right there on GitHub. A star takes one click, helps other Mac users find it, and tells me the next hero is worth making."
+              lede="DeskCharm is free, and its code is right there on GitHub. A star takes one click, helps others find it, and tells me the next hero is worth making."
             />
             <div className="github-star-actions">
               <a className="btn btn-dark btn-star" href={GITHUB_URL} {...external}>
