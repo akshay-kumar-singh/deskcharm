@@ -9,7 +9,7 @@
 set -euo pipefail
 
 URL="${DESKCHARM_DMG:-https://github.com/akshay-kumar-singh/deskcharm/releases/latest/download/DeskCharm.dmg}"
-[ "$(uname)" = Darwin ] || { echo "DeskCharm is a Mac app."; exit 1; }
+[ "$(uname)" = Darwin ] || { echo "This installs DeskCharm on a Mac. For Windows, use install.ps1 from the same site."; exit 1; }
 
 DEST=/Applications
 [ -w "$DEST" ] || { DEST="$HOME/Applications"; mkdir -p "$DEST"; }

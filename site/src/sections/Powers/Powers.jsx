@@ -2,12 +2,18 @@ import { useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } fro
 import { flushSync } from "react-dom";
 import { POWERS, byId } from "../../data/charms.js";
 import { reduceMotion } from "../../lib/motion.js";
+import { VISITOR_OS } from "../../lib/platform.js";
 import { DeskFrame, Dock, MenuBar, MockWindow } from "../../components/Desk.jsx";
 import Hanger from "../../components/Hanger.jsx";
 import { PlayIcon } from "../../components/Icons.jsx";
 import SectionIntro from "../../components/SectionIntro.jsx";
 import { createStage } from "./stage.js";
 import "./Powers.css";
+
+// Where a double-clicked window goes, and how to get it back.
+const GONE = VISITOR_OS === "windows"
+  ? <>It minimises, and <kbd>Alt</kbd><kbd>Tab</kbd> brings it back.</>
+  : <>Its app hides, and <kbd>⌘</kbd><kbd>Tab</kbd> brings it back.</>;
 
 // Preview one effect on its own, for checking: #preview=thor:shake, or
 // #preview=thor:shake@1.5 to hold it at 1.5 s in.
@@ -82,7 +88,7 @@ export default function Powers({ ref, preview }) {
           <SectionIntro
             kicker="Double-click. Or shake it hard."
             title={<>Every hero has <em className="s">two</em> moves.</>}
-            lede={<>Double-click a hero and the window you're working in disappears in style. Its app hides, and <kbd>⌘</kbd><kbd>Tab</kbd> brings it back. Throw a hero about hard and the whole screen gets the treatment. That part is paint only, so your clicks and typing carry on underneath.</>}
+            lede={<>Double-click a hero and the window you're working in disappears in style. {GONE} Throw a hero about hard and the whole screen gets the treatment. That part is paint only, so your clicks and typing carry on underneath.</>}
           />
         </div>
         <div className="tabs" role="tablist">

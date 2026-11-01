@@ -1,5 +1,7 @@
 import { byId } from "../data/charms.js";
-import DownloadButton from "../components/DownloadButton.jsx";
+import { DOWNLOADS } from "../config.js";
+import { VISITOR_OS } from "../lib/platform.js";
+import DownloadButton, { OtherDownload } from "../components/DownloadButton.jsx";
 import Hanger from "../components/Hanger.jsx";
 import SectionIntro from "../components/SectionIntro.jsx";
 import "./Cta.css";
@@ -8,6 +10,7 @@ import "./Cta.css";
 const ROW = ["Iron-Man", "Bat-Man", "Spider-Man", "Hulk", "Thor", "Super-Man", "Venom"];
 
 export default function Cta() {
+  const download = DOWNLOADS[VISITOR_OS];
   return (
     <section className="cta" id="cta">
       <div className="row">
@@ -19,10 +22,10 @@ export default function Cta() {
       <SectionIntro
         kicker="One little download."
         title={<>Your screen deserves <em className="s">a hero.</em></>}
-        lede="Free, and quiet in your menu bar until you want to play."
+        lede={`Free, and quiet in your ${VISITOR_OS === "windows" ? "system tray" : "menu bar"} until you want to play.`}
       />
       <DownloadButton variant="gold" />
-      <p className="meta">macOS 14 or later · Universal · 19 MB</p>
+      <p className="meta">{download.needs} · {download.arch} · {download.size} · <OtherDownload /></p>
     </section>
   );
 }

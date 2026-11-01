@@ -1,13 +1,20 @@
 import { byId } from "../data/charms.js";
+import { VISITOR_OS } from "../lib/platform.js";
 import Hanger from "../components/Hanger.jsx";
 import { ArrowIcon } from "../components/Icons.jsx";
 import SectionIntro from "../components/SectionIntro.jsx";
 import Steps from "../components/Steps.jsx";
 import "./MakeYourOwn.css";
 
+// The Mac finds the subject in a photo and cuts it out; the Windows app keeps
+// the shape of a picture already cut out, and hangs anything else as a card.
+const windows = VISITOR_OS === "windows";
+
 const STEPS = [
   ["Drop in a picture", "✦ → Charm → New Custom Charm…, then choose a photo or drag one in."],
-  ["It's cut out for you", "The subject is found and cut out on your Mac, then hung from the top of its head, not an empty corner."],
+  windows
+    ? ["Cut it out, or don't", "A PNG with its background removed keeps its shape (Paint on Windows 11 can remove it). Any other picture hangs as a rounded card."]
+    : ["It's cut out for you", "The subject is found and cut out on your Mac, then hung from the top of its head, not an empty corner."],
   ["Give it powers", "Mix and match: Spider-Man's web yank on a double-click and Thor's thunderstorm on a shake, say."],
 ];
 
@@ -19,7 +26,9 @@ export default function MakeYourOwn() {
           <SectionIntro
             kicker="Make it yours."
             title={<>Any picture, <em className="s">turned into a charm.</em></>}
-            lede="Your dog, your face, your favourite mug. DeskCharm lifts the subject off the background and gives it a white die-cut border, like a sticker."
+            lede={windows
+              ? "Your dog, your face, your favourite mug. DeskCharm gives it a white die-cut border, like a sticker, and hangs it on the chain."
+              : "Your dog, your face, your favourite mug. DeskCharm lifts the subject off the background and gives it a white die-cut border, like a sticker."}
           />
           <Steps items={STEPS} />
         </div>

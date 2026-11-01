@@ -49,7 +49,7 @@ export default function GitHubStar() {
               <span>{owner} / <b>{name}</b></span>
               <em>Public</em>
             </div>
-            <p>A macOS menu bar desk toy: a charm hangs from the top of your screen on a gold chain and swings with real rope physics.</p>
+            <p>A desk toy for Mac and Windows: a charm hangs from the top of your screen on a gold chain and swings with real rope physics.</p>
             <div className="repo-foot">
               <span className="repo-lang"><i />Swift</span>
               {stars != null && <span className="repo-stars"><StarIcon />{stars.toLocaleString()}</span>}

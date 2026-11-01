@@ -1,6 +1,11 @@
 .install { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; }
 .install > * { min-width: 0; }
 .install-download { margin-top: 34px; }
+/* Mac or Windows: two pills, the one picked filled in. */
+.os-switch { display: inline-flex; gap: 4px; margin-top: 30px; padding: 4px; border-radius: 999px; background: var(--bg-2); box-shadow: inset 0 0 0 1px var(--line); }
+.os-switch button { border: 0; border-radius: 999px; padding: 8px 20px; cursor: pointer; background: transparent; color: var(--ink-2); font-family: var(--display); font-weight: 700; font-size: 14px; transition: background 0.15s, color 0.15s, box-shadow 0.15s; }
+.os-switch button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: var(--sh); }
+.os-switch + .steps { margin-top: 26px; }
 details { border-bottom: 1px solid var(--line); padding: 18px 0; }
 details:first-of-type { border-top: 1px solid var(--line); }
 summary { cursor: pointer; list-style: none; font-family: var(--display); font-weight: 700; font-size: 17px; letter-spacing: -0.01em; display: flex; justify-content: space-between; gap: 16px; }

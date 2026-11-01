@@ -61,6 +61,7 @@ kbd { font: 12.5px ui-monospace, SFMono-Regular, Menlo, monospace; background: v
 .btn-gold { background: linear-gradient(180deg, #ffe9a8, var(--gold-light) 45%, var(--gold)); color: #1d1404; box-shadow: 0 12px 30px -10px rgba(226, 194, 100, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.7); }
 .btn-gold:hover { transform: translateY(-2px); }
 .meta { font-size: 13.5px; color: var(--ink-3); margin-top: 14px; }
+.meta a { white-space: nowrap; }
 
 /* ---------- sections ---------- */
 section.block { padding: 110px 0; }

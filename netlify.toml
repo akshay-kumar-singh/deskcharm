@@ -1,7 +1,14 @@
 # Netlify builds the download site from site/ on every push to main. The
-# .dmg isn't part of the site: it's attached to the latest GitHub release,
-# which the download buttons and install.sh link to (site/src/config.js).
+# downloads, DeskCharm.dmg and DeskCharm-Setup.exe, aren't part of the site:
+# they're attached to the latest GitHub release, which the download buttons,
+# install.sh and install.ps1 link to (site/src/config.js).
 [build]
   base = "site"
   command = "npm run build"
   publish = "dist"
+
+# PowerShell's irm runs what it's given as a script only if it comes as text.
+[[headers]]
+  for = "/install.ps1"
+  [headers.values]
+    Content-Type = "text/plain; charset=utf-8"

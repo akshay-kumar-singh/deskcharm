@@ -1,9 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { CHARMS, POWERS } from "../../data/charms.js";
 import { DeskFrame, Dock, MenuBar, MockWindow } from "../../components/Desk.jsx";
-import DownloadButton from "../../components/DownloadButton.jsx";
+import DownloadButton, { OtherDownload } from "../../components/DownloadButton.jsx";
+import { DOWNLOADS } from "../../config.js";
+import { VISITOR_OS } from "../../lib/platform.js";
 import { createChain } from "./chain.js";
 import "./Hero.css";
+
+const download = DOWNLOADS[VISITOR_OS];
 
 export default function Hero() {
   const desk = useRef(null), canvas = useRef(null), chain = useRef(null);
@@ -26,12 +30,12 @@ export default function Hero() {
         <div>
           <p className="kicker">A little mischief. A lot of heroes.</p>
           <h1>Superheroes, <em className="s">hanging</em> off your screen.</h1>
-          <p className="lede">DeskCharm hangs a charm from the top of your Mac's screen on a gold chain. Fling it and it swings with real physics. Double-click it, or shake it hard, and its hero gets to work.</p>
+          <p className="lede">DeskCharm hangs a charm from the top of your {VISITOR_OS === "windows" ? "PC" : "Mac"}'s screen on a gold chain. Fling it and it swings with real physics. Double-click it, or shake it hard, and its hero gets to work.</p>
           <div className="actions">
             <DownloadButton />
             <a className="btn btn-ghost" href="#powers">See the powers</a>
           </div>
-          <p className="meta">Free · v1.0 · 19 MB · macOS 14 or later · Apple silicon &amp; Intel · <a href="#terminal">Install from Terminal</a></p>
+          <p className="meta">Free · v1.0 · {download.size} · {download.needs} · {download.arch} · <a href="#terminal">Install from {download.shell}</a> · <OtherDownload /></p>
         </div>
         <div>
           <DeskFrame ref={desk}>
