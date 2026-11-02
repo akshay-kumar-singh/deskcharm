@@ -5,14 +5,16 @@
 .maker-link { font-family: var(--display); font-weight: 700; font-size: 15px; color: var(--gold-deep); text-decoration: none; }
 .maker-link:hover { text-decoration: underline; }
 
-/* The portfolio as a card, tilted the other way to the repo card above it. */
+/* The portfolio as a card, tilted the other way to the repo card above it: who made this,
+   what else he makes (each row opens that part of the portfolio), and his YouTube channel. */
 .folio-card {
-  position: relative; justify-self: center; width: min(100%, 460px); padding: 26px 26px 20px;
+  position: relative; justify-self: center; width: min(100%, 470px); padding: 24px 24px 18px;
   border-radius: 22px; background: var(--card); box-shadow: var(--sh-float), inset 0 0 0 1px var(--line);
   transform: rotate(-1.5deg); transition: transform 0.25s ease;
 }
 .folio-card:hover { transform: rotate(-0.5deg) translateY(-4px); }
 .folio-card::before { content: "👋"; position: absolute; right: -18px; top: -24px; font-size: 42px; transform: rotate(14deg); filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.18)); }
+
 .folio-head { display: flex; align-items: center; gap: 14px; }
 .folio-mono {
   flex: none; display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%;
@@ -21,14 +23,42 @@
 }
 .folio-head div b { display: block; font-family: var(--display); font-size: 18px; letter-spacing: -0.01em; }
 .folio-head div span { display: block; margin-top: 2px; font-size: 13px; line-height: 1.45; color: var(--ink-3); }
-.folio-card ul { list-style: none; margin: 20px 0 0; padding: 0; border-top: 1px solid var(--line); }
-.folio-card li a { display: grid; grid-template-columns: 1fr auto; gap: 2px 14px; padding: 12px 2px; border-bottom: 1px solid var(--line); color: inherit; text-decoration: none; }
-.folio-card li b { font-family: var(--display); font-size: 15px; letter-spacing: -0.01em; }
-.folio-card li span { grid-column: 1; font-size: 13.5px; line-height: 1.45; color: var(--ink-2); }
-.folio-card li svg { grid-column: 2; grid-row: 1 / span 2; align-self: center; width: 16px; height: 16px; color: var(--gold); transition: transform 0.15s; }
+
+.folio-card ul { list-style: none; margin: 18px 0 0; padding: 0; border-top: 1px solid var(--line); }
+.folio-card li a {
+  display: grid; grid-template-columns: 36px 1fr auto; gap: 2px 14px; align-items: center;
+  padding: 11px 2px; border-bottom: 1px solid var(--line); color: inherit; text-decoration: none;
+}
+.folio-icon {
+  grid-row: 1 / span 2; display: grid; place-items: center; width: 36px; height: 36px; border-radius: 11px;
+  background: var(--bg-2); color: var(--gold-deep); transition: background 0.15s, color 0.15s;
+}
+.folio-icon svg { width: 19px; height: 19px; }
+.folio-card li b { grid-column: 2; font-family: var(--display); font-size: 15px; letter-spacing: -0.01em; }
+.folio-text { grid-column: 2; font-size: 13.5px; line-height: 1.45; color: var(--ink-2); }
+.folio-card li a > svg { grid-column: 3; grid-row: 1 / span 2; width: 16px; height: 16px; color: var(--gold); transition: transform 0.15s; }
 .folio-card li a:hover b { color: var(--gold-deep); }
-.folio-card li a:hover svg { transform: translate(2px, -2px); }
-.folio-foot { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 16px; font-family: var(--display); font-weight: 700; font-size: 14px; color: var(--gold-deep); text-decoration: none; }
+.folio-card li a:hover .folio-icon { background: var(--ink); color: var(--gold-light); }
+.folio-card li a:hover > svg { transform: translate(2px, -2px); }
+
+/* Before You Merge: a quiet row set a little apart from the work, in the card's own colours,
+   to explore rather than to sell. */
+.folio-explore {
+  display: grid; grid-template-columns: 36px 1fr auto; align-items: center; gap: 2px 14px;
+  margin-top: 14px; padding: 12px 14px 12px 12px; border-radius: 16px; background: var(--bg-2);
+  color: inherit; text-decoration: none; transition: background 0.15s;
+}
+.folio-explore .folio-icon { background: var(--card); }
+.folio-explore-text { min-width: 0; }
+.folio-explore-text b { display: block; font-family: var(--display); font-size: 15px; letter-spacing: -0.01em; }
+.folio-explore-text span { display: block; margin-top: 1px; font-size: 13px; line-height: 1.4; color: var(--ink-2); }
+.folio-explore-go { display: inline-flex; align-items: center; gap: 5px; font: 700 13px/1 var(--display); color: var(--gold-deep); white-space: nowrap; }
+.folio-explore-go svg { width: 13px; height: 13px; transition: transform 0.15s; }
+.folio-explore:hover { background: #efe8d8; }
+.folio-explore:hover b { color: var(--gold-deep); }
+.folio-explore:hover .folio-explore-go svg { transform: translate(2px, -2px); }
+
+.folio-foot { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 14px; font-family: var(--display); font-weight: 700; font-size: 14px; color: var(--gold-deep); text-decoration: none; }
 .folio-foot svg { width: 14px; height: 14px; }
 .folio-foot:hover { text-decoration: underline; }
 
@@ -36,9 +66,13 @@
   .maker-wrap { grid-template-columns: 1fr; gap: 48px; }
 }
 @media (max-width: 640px) {
-  .folio-card { transform: rotate(-1deg); }
+  .folio-card { transform: rotate(-1deg); padding: 22px 18px 16px; }
   .folio-card::before { right: 4px; font-size: 36px; }
+  .folio-card li a { grid-template-columns: 32px 1fr auto; gap: 2px 12px; }
+  .folio-icon { width: 32px; height: 32px; border-radius: 10px; }
+  .folio-explore { grid-template-columns: 32px 1fr; gap: 6px 12px; }
+  .folio-explore-go { grid-column: 2; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .folio-card, .folio-card li svg { transition: none; }
+  .folio-card, .folio-card li a > svg, .folio-icon, .folio-explore, .folio-explore-go svg { transition: none; }
 }

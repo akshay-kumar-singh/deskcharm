@@ -5,6 +5,9 @@ export const GITHUB_URL = `https://github.com/${GITHUB_REPO}`;
 // videos, and a way to get in touch.
 export const PORTFOLIO_URL = "https://portfolio-next-js-blond.vercel.app/";
 
+// Before You Merge, the owner's YouTube channel (the maker card and the footer).
+export const YOUTUBE_URL = "https://www.youtube.com/@beforeyoumerge";
+
 // Where the download buttons point: the files attached to the latest GitHub
 // release, DeskCharm.dmg and DeskCharm-Setup.exe. GitHub serves big files for
 // free; Netlify advises keeping each file in a deploy under 10 MB.
