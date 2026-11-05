@@ -19,12 +19,12 @@ const INSTALL = {
   },
 };
 
-export default function TerminalInstall({ os = VISITOR_OS, id, title = `Or skip the warning: install from ${DOWNLOADS[os].shell}`, badge }) {
+export default function TerminalInstall({ os = VISITOR_OS, id, title = `Or skip the warning: install from ${DOWNLOADS[os].shell}` }) {
   const [copied, copy] = useCopy();
   const { cmd, how } = INSTALL[os];
   return (
     <div className="term" id={id}>
-      <b>{title}{badge && <em className="term-badge">{badge}</em>}</b>
+      <b>{title}</b>
       <span>{how}</span>
       <div className="cmd">
         <code>{cmd}</code>

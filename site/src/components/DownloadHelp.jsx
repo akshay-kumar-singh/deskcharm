@@ -2,21 +2,20 @@ import { createContext, useCallback, useContext, useState } from "react";
 import { DOWNLOADS, PORTFOLIO_URL } from "../config.js";
 import Modal from "./Modal.jsx";
 import Steps from "./Steps.jsx";
-import TerminalInstall from "./TerminalInstall.jsx";
 import "./DownloadHelp.css";
 
 // DeskCharm isn't notarized by Apple or signed for Windows, so a downloaded
 // copy is stopped the first time it's opened: by Gatekeeper on a Mac, by
 // SmartScreen on Windows. Every download button opens this alongside the
-// download, for the computer it's for. It leads with the one line that
-// installs without the warning, then the steps to let the download through
-// by hand.
+// download, for the computer it's for: how to open what's downloading. The
+// one-line install from Terminal or PowerShell is offered in the Install
+// section instead, before anything is downloaded, not after.
 const ShowHelp = createContext(() => {});
 export const useDownloadHelp = () => useContext(ShowHelp);
 
 const HELP = {
   mac: {
-    lede: "DeskCharm isn't notarized by Apple yet, so macOS stops it the first time it opens. Skip that with one line in Terminal, or let it through yourself.",
+    lede: "DeskCharm isn't notarized by Apple yet, so macOS asks you to allow it the first time it opens. It takes a minute, and only this once.",
     steps: [
       ["Open DeskCharm.dmg", "Drag DeskCharm onto the Applications folder."],
       ["Open DeskCharm from Applications", <>macOS says "DeskCharm" Not Opened. Click <span className="ui-btn">Done</span>, not Move to Bin.</>],
@@ -25,7 +24,7 @@ const HELP = {
     tip: <><b>On macOS 14 Sonoma?</b> Skip System Settings: right-click DeskCharm in Applications and choose <span className="ui-btn">Open</span>.</>,
   },
   windows: {
-    lede: "DeskCharm isn't signed for Windows yet, so Windows warns you the first time it runs. Skip that with one line in PowerShell, or let it through yourself.",
+    lede: "DeskCharm isn't signed for Windows yet, so Windows asks you to let it through the first time it runs. It takes a minute, and only this once.",
     steps: [
       ["Keep the download", <>If your browser says it isn't commonly downloaded, keep it. In Edge, that's <span className="ui-btn">⋯</span> → Keep → Show more → <span className="ui-btn">Keep anyway</span>.</>],
       ["Open DeskCharm-Setup.exe", <>If "Windows protected your PC" appears, click More info, then <span className="ui-btn">Run anyway</span>.</>],
@@ -48,8 +47,6 @@ export function DownloadHelpProvider({ children }) {
           <p className="kicker">Your download has started</p>
           <h3>One more step, <em className="s">just once.</em></h3>
           <p className="download-help-lede">{help.lede}</p>
-          <TerminalInstall os={os} title={`Install from ${download.shell}`} badge="Recommended · no warning" />
-          <p className="download-help-or"><span>Or open the download yourself</span></p>
           <Steps items={help.steps} />
           <p className="download-help-tip">{help.tip}</p>
           <p className="download-help-retry">Download didn't start? <a href={download.url}>Download again</a></p>
