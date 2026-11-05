@@ -3,7 +3,7 @@ import { Powers } from "../effects/powers.js";
 import { RopeSim } from "../sim/rope.js";
 import { ShakeMeter } from "../sim/shake.js";
 import { SoundFX } from "../sound/sfx.js";
-import { drawChain, drawCharm } from "./draw.js";
+import { SHADOW_REACH, drawChain, drawCharm } from "./draw.js";
 import { ClickTracker, Trail } from "./gestures.js";
 import { Overlay } from "./overlay.js";
 
@@ -30,6 +30,8 @@ const overlay = new Overlay(api);
 let state = await api.state();
 let image = null, imageUrl = null;
 let dpr = 1;
+// The frame loop's: frames drawn, when the last was, what it covered, and the frame it waits for.
+let frames = 0, lastDrawn = -Infinity, covered = null, timer = 0, waiting = false;
 
 /** The charm as it is now, for drawing, hit-testing and aiming the powers. */
 const charm = {
@@ -86,6 +88,7 @@ async function apply(next) {
       api.log("couldn't load the charm's art:", imageUrl, String(e));
     }
   }
+  wake();
 }
 
 await apply(state);
@@ -96,9 +99,16 @@ if (Object.values(powersOf(state.charm)).includes("hulk")) setTimeout(() => powe
 
 // The window takes clicks only while the pointer is over the charm, or while
 // it's held; everywhere else they fall through to whatever is underneath.
+// While they fall through the window hears nothing of the mouse, so the app
+// says where the cursor is (watchCursor in main.js).
 let pointer = null, held = null, ignoring = true;
 window.addEventListener("mousemove", e => { pointer = { x: e.clientX, y: e.clientY }; });
 document.documentElement.addEventListener("mouseleave", () => { pointer = null; });
+api.onCursor(at => {
+  if (held) return;                            // the window has the pointer itself while it's held
+  pointer = at;
+  updateClickThrough();
+});
 
 function updateClickThrough() {
   const ignore = !(held || (pointer && charm.hit(pointer)));
@@ -116,6 +126,7 @@ canvas.addEventListener("pointerdown", e => {
   held = { id: e.pointerId, from: p };
   sim.grab(p);
   shake.drag(p, e.timeStamp / 1000);
+  wake();
 });
 
 canvas.addEventListener("pointermove", e => {
@@ -157,6 +168,7 @@ function fit() {
     canvas.height = h;
     canvas.style.width = `${window.innerWidth}px`;
     canvas.style.height = `${window.innerHeight}px`;
+    covered = null;                            // resizing clears the canvas
   }
 }
 
@@ -169,28 +181,84 @@ function configure() {
   }
 }
 
+// The frame loop. While something's going on the charm is drawn every
+// display frame, up to 60 a second; while it only sways in the breeze, 25 a
+// second, which looks no different at that speed and costs far less. The
+// rope is stepped in real time either way, and only the part of the canvas
+// the chain and charm cover, then and now, is cleared and drawn again.
+const BUSY_FPS = 60, CALM_FPS = 25;
+const CALM_SPEED = 20;                         // pt/s; the breeze alone never moves the chain past 8
+
 function frame(ms) {
+  waiting = false;
+  timer = 0;
   const now = ms / 1000;
   fit();
   configure();
   sim.advance(now);
   trail.record(sim.tip, sim.charmRotation, now);
+  const busy = !!held || overlay.moving(now) || sim.speed > CALM_SPEED;
+  if (now - lastDrawn >= 1 / (busy ? BUSY_FPS : CALM_FPS) - 0.004) {
+    lastDrawn = now;
+    draw();
+    overlay.frame(now);
+  }
+  updateClickThrough();
+  if (busy) wake();
+  else timer = setTimeout(() => frame(performance.now()), 1000 / CALM_FPS);
+}
 
+/** Back to drawing every display frame, as soon as something starts: a touch, a power, new art. */
+function wake() {
+  clearTimeout(timer);
+  timer = 0;
+  if (!waiting) {
+    waiting = true;
+    requestAnimationFrame(frame);
+  }
+}
+overlay.onPlay = wake;
+
+function draw() {
+  frames++;
+  const art = charm.art(), hang = hangOf(state.charm);
+  const ghosts = image && usesPower(powersOf(state.charm), "spiderMan") ? trail.ghosts() : [];
+  const box = coverage(art, hang, ghosts);
+  const clear = covered ? union(covered, box) : { x: 0, y: 0, width: window.innerWidth, height: window.innerHeight };
+  covered = box;
+  const x = Math.floor(clear.x * dpr) - 1, y = Math.floor(clear.y * dpr) - 1;
   ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.clearRect(x, y, Math.ceil((clear.x + clear.width) * dpr) + 1 - x, Math.ceil((clear.y + clear.height) * dpr) + 1 - y);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.imageSmoothingQuality = "high";
   drawChain(ctx, sim);
-  if (image) {
-    const ghosts = usesPower(powersOf(state.charm), "spiderMan") ? trail.ghosts() : [];
-    drawCharm(ctx, image, charm.art(), hangOf(state.charm), sim.tip, sim.charmRotation, ghosts, dpr);
-  }
-
-  updateClickThrough();
-  overlay.frame(now);
-  requestAnimationFrame(frame);
+  if (image) drawCharm(ctx, image, art, hang, sim.tip, sim.charmRotation, ghosts, dpr);
 }
-requestAnimationFrame(frame);
+
+/** What the chain and charm cover, in points: the chain and its hook, and the art and its shadow at every pose drawn. */
+function coverage(art, hang, ghosts) {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  const add = (x, y, r) => { x0 = Math.min(x0, x - r); y0 = Math.min(y0, y - r); x1 = Math.max(x1, x + r); y1 = Math.max(y1, y + r); };
+  for (const n of sim.nodes) add(n.p.x, n.p.y, 4);
+  add(sim.anchor.x, sim.anchor.y, 8);
+  const corners = [[art.x, art.y], [art.x + art.width, art.y], [art.x, art.y + art.height], [art.x + art.width, art.y + art.height]];
+  for (const pose of [{ tip: sim.tip, angle: sim.charmRotation }, ...ghosts]) {
+    const a = pose.angle + hang.tilt, c = Math.cos(a), s = Math.sin(a);
+    for (const [u, v] of corners) add(pose.tip.x + u * c - v * s, pose.tip.y + u * s + v * c, SHADOW_REACH);
+  }
+  return { x: x0, y: y0, width: x1 - x0, height: y1 - y0 };
+}
+
+function union(a, b) {
+  const x = Math.min(a.x, b.x), y = Math.min(a.y, b.y);
+  return { x, y, width: Math.max(a.x + a.width, b.x + b.width) - x, height: Math.max(a.y + a.height, b.y + b.height) - y };
+}
+
+wake();
 
 // For tests: lets a harness set off powers and check on the charm.
-window.__deskcharm = { sim, powers, overlay, charm, get state() { return state; }, get image() { return image; } };
+window.__deskcharm = {
+  sim, powers, overlay, charm,
+  get state() { return state; }, get image() { return image; }, get frames() { return frames; },
+  get ignoring() { return ignoring; },
+};

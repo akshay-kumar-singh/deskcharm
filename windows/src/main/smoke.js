@@ -27,6 +27,17 @@ export async function run(get) {
   const tip = await js("JSON.stringify(window.__deskcharm.sim.tip)");
   check("the charm hangs on its chain", JSON.parse(tip).y > 200, tip);
 
+  // With the cursor over the charm the window takes clicks; anywhere else they go through.
+  const cursor = at => get().charmWin.webContents.send("cursor", at);
+  cursor(JSON.parse(await js("JSON.stringify(window.__deskcharm.charm.artPoint({ x: 0.5, y: 0.5 }))")));
+  await wait(150);
+  const takes = await js("!window.__deskcharm.ignoring");
+  cursor({ x: 5, y: 5 });
+  await wait(150);
+  const passes = await js("window.__deskcharm.ignoring");
+  cursor(null);
+  check("clicks are taken over the charm and go through everywhere else", takes && passes, `over the charm: ${takes ? "taken" : "through"}, off it: ${passes ? "through" : "taken"}`);
+
   // Each power, watched: was the overlay shown, did anything get drawn, did
   // it end and hide the overlay again, and how far did it get.
   const powers = [
@@ -63,6 +74,19 @@ export async function run(get) {
       shown && inked > 20 && done && hidden && reached,
       `${Math.round((Date.now() - started) / 100) / 10}s, ${inked} inked samples${gl ? ", 3D" : ""}${stage ? `, ${stage}: ${reached}` : ""}`);
   }
+
+  // At rest: once the powers are over and the charm only sways in the breeze,
+  // how much the whole app uses, every process summed (100% is one core). A
+  // swing takes half a minute to die away, so the charm is hung straight first.
+  await js("(() => { const s = window.__deskcharm.sim; s.reset(s.anchor, s.nodes.length, s.segLen); })()");
+  await wait(3000);
+  const cpu = () => app.getAppMetrics().reduce((sum, m) => sum + m.cpu.percentCPUUsage, 0);
+  const frames = () => js("window.__deskcharm.frames ?? 0");
+  cpu();
+  const before = await frames();
+  await wait(5000);
+  const used = cpu(), drawn = ((await frames()) - before) / 5;
+  console.log(`IDLE  ${used.toFixed(1)}% CPU over 5s, ${drawn.toFixed(0)} frames drawn a second`);
 
   console.log(failures ? `\n${failures} check(s) FAILED` : "\nAll smoke checks passed.");
   app.exit(failures ? 1 : 0);

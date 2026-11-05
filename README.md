@@ -37,7 +37,11 @@ cd windows && npm install
 npm start           # run it from source
 npm test            # the physics and simulations
 npm run dist        # → windows/release/DeskCharm-Setup.exe (this works on a Mac too)
+npm run art         # after changing Charms/hd or Effects (needs: brew install webp)
 ```
+
+It ships its own smaller copies of the charm and effect art, in
+`windows/art/`, made from `Charms/hd` and `Effects` by `npm run art`.
 
 The installer is attached to the same GitHub release as `DeskCharm-Setup.exe`,
 which the site's Windows button and `install.ps1` fetch from the latest release.

@@ -10,6 +10,7 @@
     "build": "vite build",
     "start": "vite build && electron .",
     "test": "node --test test/*.test.mjs",
+    "art": "node scripts/make-art.mjs",
     "dist": "node scripts/dist.mjs"
   },
   "dependencies": {
@@ -31,6 +32,8 @@
     },
     "npmRebuild": false,
     "electronLanguages": ["en-US"],
+    "compression": "maximum",
+    "afterPack": "scripts/after-pack.cjs",
     "files": [
       "package.json",
       "dist/renderer/**",
@@ -41,8 +44,8 @@
       "!**/node_modules/@koromix/koffi-{darwin,linux,freebsd,openbsd}-*/**"
     ],
     "extraResources": [
-      { "from": "../Charms/hd", "to": "Charms", "filter": ["*.png"] },
-      { "from": "../Effects", "to": "Effects", "filter": ["Bat-*.png", "Concrete.jpg", "HulkModel.glb", "HulkSkin.png", "CREDITS.md"] }
+      { "from": "art/Charms", "to": "Charms" },
+      { "from": "art/Effects", "to": "Effects" }
     ],
     "win": {
       "target": [{ "target": "nsis", "arch": ["x64"] }],

@@ -7,9 +7,16 @@ import * as THREE from "three";
 // behind (2D), the Hulk's 3D scene, and in front (2D). It's shown only while
 // something is playing, and nothing is redrawn while every effect holds still.
 
+// Each layer covers the whole screen, which on a high-resolution one is a
+// great many pixels to redraw every frame for effects that look no different
+// a touch softer, so a layer is kept to about four million.
+const MAX_LAYER_PIXELS = 4e6;
+
 export class Overlay {
   constructor(api) {
     this.api = api;
+    /** Called when an effect starts, so the page draws every frame again. */
+    this.onPlay = null;
     this.entries = [];
     this.visible = false;
     this.opening = null;
@@ -55,7 +62,7 @@ export class Overlay {
   layout(info) {
     this.info = info;
     this.size = { width: info.bounds.width, height: info.bounds.height };
-    this.dpr = info.scaleFactor || 1;
+    this.dpr = Math.min(info.scaleFactor || 1, Math.sqrt(MAX_LAYER_PIXELS / (this.size.width * this.size.height)));
     for (const canvas of [this.back, this.gl, this.front]) {
       const w = Math.round(this.size.width * this.dpr), h = Math.round(this.size.height * this.dpr);
       if (canvas !== this.gl && (canvas.width !== w || canvas.height !== h)) { canvas.width = w; canvas.height = h; }
@@ -87,14 +94,19 @@ export class Overlay {
     const entry = { effect: null, done, finished: false };
     entry.effect = create(() => { entry.finished = true; });
     this.entries.push(entry);
+    this.onPlay?.();
     return entry.effect;
+  }
+
+  /** Whether anything on the overlay moves at `now`: an effect playing that isn't holding still. */
+  moving(now) {
+    return this.entries.some(e => !(e.effect.heldUntil != null && now < e.effect.heldUntil));
   }
 
   /** Draws every playing effect at `now`, seconds on the page's frame clock. */
   frame(now) {
-    if (!this.visible || !this.entries.length) return;
     // While everything holds still the last frame stays on screen untouched.
-    if (this.entries.every(e => e.effect.heldUntil != null && now < e.effect.heldUntil)) return;
+    if (!this.visible || !this.moving(now)) return;
     const s = this.dpr;
     for (const ctx of [this.backCtx, this.frontCtx]) {
       ctx.setTransform(1, 0, 0, 1, 0, 0);

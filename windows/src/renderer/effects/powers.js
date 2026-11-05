@@ -49,8 +49,8 @@ class Art {
 
   /** One wingbeat of a bat seen face on: wings raised, sweeping down, back up. */
   bats() { return this.once("bats", () => Promise.all([1, 2, 3, 4, 5, 6].map(i => this.image(`Bat-${i}.png`)))); }
-  concrete() { return this.once("concrete", async () => concreteTiles(await this.image("Concrete.jpg"))); }
-  hulk() { return this.once("hulk", () => loadHulkRig(this.base + "HulkModel.glb", this.base + "HulkSkin.png")); }
+  concrete() { return this.once("concrete", async () => concreteTiles(await this.image("Concrete.webp"))); }
+  hulk() { return this.once("hulk", () => loadHulkRig(this.base + "HulkModel.glb", this.base + "HulkSkin.webp")); }
 }
 
 export class Powers {

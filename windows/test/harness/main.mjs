@@ -8,7 +8,6 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.join(here, "..", "..");
-const repo = path.join(root, "..");
 const out = process.argv[2] ?? path.join(root, "harness-out");
 const cases = process.argv.slice(3).map(c => c.split(":"));
 
@@ -16,7 +15,7 @@ protocol.registerSchemesAsPrivileged([{ scheme: "app", privileges: { standard: t
 if (process.platform === "darwin") app.dock?.hide();
 
 app.whenReady().then(async () => {
-  const roots = { charms: path.join(repo, "Charms", "hd"), effects: path.join(repo, "Effects") };
+  const roots = { charms: path.join(root, "art", "Charms"), effects: path.join(root, "art", "Effects") };
   protocol.handle("app", request => {
     const parts = decodeURIComponent(new URL(request.url).pathname).split("/").filter(Boolean);
     const file = roots[parts[0]] ? path.join(roots[parts[0]], ...parts.slice(1)) : path.join(root, ...parts);

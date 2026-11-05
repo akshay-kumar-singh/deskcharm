@@ -15,7 +15,7 @@ const latest = file => `${GITHUB_URL}/releases/latest/download/${file}`;
 
 export const DOWNLOADS = {
   mac: { name: "Mac", url: latest("DeskCharm.dmg"), size: "19 MB", needs: "macOS 14 or later", arch: "Apple silicon & Intel", shell: "Terminal" },
-  windows: { name: "Windows", url: latest("DeskCharm-Setup.exe"), size: "125 MB", needs: "Windows 10 or 11", arch: "64-bit", shell: "PowerShell" },
+  windows: { name: "Windows", url: latest("DeskCharm-Setup.exe"), size: "103 MB", needs: "Windows 10 or 11", arch: "64-bit", shell: "PowerShell" },
 };
 
 export const UPI = {
