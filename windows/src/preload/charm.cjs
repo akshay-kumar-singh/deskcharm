@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld("deskcharm", {
   state: () => ipcRenderer.invoke("state"),
   onState: callback => ipcRenderer.on("state", (_, s) => callback(s)),
   setIgnoreMouse: ignore => ipcRenderer.send("ignore-mouse", ignore),
+  onCursor: callback => ipcRenderer.on("cursor", (_, at) => callback(at)),
   showOverlay: () => ipcRenderer.invoke("overlay:show"),
   hideOverlay: () => ipcRenderer.send("overlay:hide"),
   findTarget: () => ipcRenderer.invoke("target:find"),

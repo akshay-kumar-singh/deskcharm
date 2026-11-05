@@ -83,17 +83,19 @@ function serveFiles() {
 
 // Charms.
 
+/** The built-in charms, each key with its art's file name. */
 function builtInCharms() {
   try {
-    return fs.readdirSync(paths.charms).filter(f => f.toLowerCase().endsWith(".png")).map(f => f.slice(0, -4)).sort();
+    const files = fs.readdirSync(paths.charms).filter(f => /\.(webp|png)$/i.test(f)).sort();
+    return new Map(files.map(f => [f.replace(/\.(webp|png)$/i, ""), f]));
   } catch (e) {
     log("no charm art found at", paths.charms, e.message);
-    return [];
+    return new Map();
   }
 }
 
 function charmKeys() {
-  return [...builtInCharms(), ...customs.all.map(c => customs.key(c))];
+  return [...builtInCharms().keys(), ...customs.all.map(c => customs.key(c))];
 }
 
 function fallbackCharm() {
@@ -109,7 +111,8 @@ function currentCharm() {
     const stamp = fs.existsSync(customs.imagePath(custom)) ? fs.statSync(customs.imagePath(custom)).mtimeMs : 0;
     return { key, title: custom.name, url: `${ORIGIN}/custom/${custom.id}.png?v=${stamp}`, custom };
   }
-  return { key, title: titleOf(key ?? ""), url: `${ORIGIN}/charms/${encodeURIComponent(key)}.png`, custom: null };
+  const file = builtInCharms().get(key) ?? `${key}.webp`;
+  return { key, title: titleOf(key ?? ""), url: `${ORIGIN}/charms/${encodeURIComponent(file)}`, custom: null };
 }
 
 function state() {
@@ -151,8 +154,9 @@ function createCharmWindow() {
   charmWin.setAlwaysOnTop(true, "screen-saver");
   charmWin.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   // It covers a good deal of screen but is see-through, so it lets clicks
-  // through except over the charm itself; the page says when that is.
-  charmWin.setIgnoreMouseEvents(true, { forward: true });
+  // through except over the charm itself; the page says when that is, from
+  // where watchCursor says the pointer is.
+  charmWin.setIgnoreMouseEvents(true);
   if (smoke) charmWin.setOpacity(0);
 
   charmWin.webContents.setWindowOpenHandler(({ url, frameName }) => {
@@ -179,6 +183,28 @@ function createCharmWindow() {
   charmWin.webContents.on("render-process-gone", (_, details) => log("charm page gone:", details));
   charmWin.once("ready-to-show", () => charmWin.showInactive());
   charmWin.loadURL(`${ORIGIN}/charm.html`);
+  watchCursor();
+}
+
+/**
+ * Tells the charm's page where the pointer is while it's over the window,
+ * and once when it leaves, so the page can let clicks through everywhere but
+ * the charm. Electron could forward mouse moves to the window instead, but on
+ * Windows it does that by hooking every mouse move on the computer through
+ * this app, which makes the whole mouse stutter whenever the app is busy.
+ * Asking where the cursor is, 30 times a second, costs next to nothing.
+ */
+function watchCursor() {
+  let last = null;
+  const timer = setInterval(() => {
+    if (!charmWin || charmWin.isDestroyed()) return clearInterval(timer);
+    const c = screen.getCursorScreenPoint(), b = charmWin.getBounds();
+    const over = c.x >= b.x && c.x < b.x + b.width && c.y >= b.y && c.y < b.y + b.height;
+    const at = over ? { x: c.x - b.x, y: c.y - b.y } : null;
+    if (at?.x === last?.x && at?.y === last?.y) return;
+    last = at;
+    charmWin.webContents.send("cursor", at);
+  }, 33);
 }
 
 function charmDisplay() {
@@ -189,7 +215,7 @@ function charmDisplay() {
 
 function listen() {
   ipcMain.handle("state", () => state());
-  ipcMain.on("ignore-mouse", (_, ignore) => charmWin?.setIgnoreMouseEvents(ignore || !!smoke, { forward: true }));
+  ipcMain.on("ignore-mouse", (_, ignore) => charmWin?.setIgnoreMouseEvents(ignore || !!smoke));
   ipcMain.on("log", (_, ...parts) => log("[page]", ...parts));
 
   ipcMain.handle("overlay:show", () => {
@@ -248,7 +274,7 @@ function buildMenu() {
   if (!tray) return;
   const current = settings.get("charm");
   const custom = customs.charm(current);
-  const builtIns = builtInCharms();
+  const builtIns = [...builtInCharms().keys()];
   const charmItems = builtIns.map(k => radio(titleOf(k), k === current, () => pickCharm(k)));
   if (customs.all.length) {
     charmItems.push({ type: "separator" });

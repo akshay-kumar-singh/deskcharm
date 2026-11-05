@@ -169,6 +169,13 @@ export class RopeSim {
    */
   get charmRotation() { return -this.tipAngle; }
 
+  /** How fast the chain is moving: its fastest node over the last step, in points a second. */
+  get speed() {
+    let fastest = 0;
+    for (const n of this.nodes) fastest = Math.max(fastest, Math.hypot(n.p.x - n.old.x, n.p.y - n.old.y));
+    return fastest / this.fixedStep;
+  }
+
   grab(p) {
     if (!this.grabbed) {
       this.grabbed = true;

@@ -41,7 +41,7 @@ async function bitmap(url) {
   return createImageBitmap(await r.blob());
 }
 
-const charmImage = await bitmap(`/charms/${key}.png`);
+const charmImage = await bitmap(`/charms/${key}.webp`);
 const height = 200, aspect = charmImage.width / charmImage.height;
 const hang = hangOf({ key });
 const tip = { x: 1180, y: 244 };
@@ -119,17 +119,17 @@ switch (name) {
     break;
   }
   case "hulkSlam": {
-    const rig = await loadHulkRig("/effects/HulkModel.glb", "/effects/HulkSkin.png");
+    const rig = await loadHulkRig("/effects/HulkModel.glb", "/effects/HulkSkin.webp");
     const renderer = new THREE.WebGLRenderer({ canvas: layers[1], alpha: true, antialias: true, preserveDrawingBuffer: true });
     renderer.setClearColor(0x000000, 0);
     renderer.setSize(W, H, false);
     three = renderer;
-    effect = new HulkSlam({ target, screen: area, floor: 48, rig, renderer, concrete: concreteTiles(await bitmap("/effects/Concrete.jpg")),
+    effect = new HulkSlam({ target, screen: area, floor: 48, rig, renderer, concrete: concreteTiles(await bitmap("/effects/Concrete.webp")),
       home: centre, homeRadius: height * aspect / 2, push, sound, finish, rng });
     break;
   }
   case "wallSmash":
-    effect = new WallSmash({ size: area, concrete: concreteTiles(await bitmap("/effects/Concrete.jpg")), push, sound, finish, rng });
+    effect = new WallSmash({ size: area, concrete: concreteTiles(await bitmap("/effects/Concrete.webp")), push, sound, finish, rng });
     break;
   case "tongueLash": {
     const mouth = () => artPoint(venomMouth(key));
